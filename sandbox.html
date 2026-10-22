@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V-LABS | Phòng Thí Nghiệm Mạch Điện Tự Do (Sandbox 3D)</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Three.js r128 & OrbitControls CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+  <style>
+    /* Tùy chỉnh thanh cuộn mảnh cho cột linh kiện */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 h-screen w-screen overflow-hidden flex select-none font-sans">
+
+  <!-- ================= CỘT TRÁI: KHAY LINH KIỆN (INVENTORY - w-64) ================= -->
+  <aside class="w-64 h-full bg-slate-900/95 backdrop-blur-md border-r border-slate-800 flex flex-col justify-between z-20 shadow-2xl shrink-0">
+    <!-- Header Cột Trái -->
+    <div class="p-4 border-b border-slate-800">
+      <div class="flex items-center gap-2.5">
+        <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-purple-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-purple-500/20">
+          <i class="fa-solid fa-bolt-lightning text-white text-base"></i>
+        </div>
+        <div>
+          <div class="flex items-center gap-1.5">
+            <span class="font-extrabold text-base tracking-wide bg-gradient-to-r from-purple-400 to-sky-400 bg-clip-text text-transparent">SANDBOX LAB</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Thiết kế mạch điện 3D tự do</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Danh sách Linh kiện (Grid 2 cột) -->
+    <div class="flex-1 overflow-y-auto p-3.5 space-y-4">
+      <div>
+        <h3 class="text-[11px] font-bold uppercase tracking-wider text-slate-400 mb-2.5 flex items-center gap-1.5">
+          <i class="fa-solid fa-toolbox text-sky-400"></i> Linh kiện cơ bản
+        </h3>
+
+        <div class="grid grid-cols-2 gap-2.5">
+          <!-- Pin 9V -->
+          <button onclick="window.spawnComponent('battery')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-sky-500/15 border border-slate-700/80 hover:border-sky-400/60 transition-all duration-200 shadow hover:shadow-sky-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-sky-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-car-battery text-xl text-sky-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Nguồn Pin</span>
+            <span class="text-[10px] text-slate-400 font-mono">9.0 V</span>
+          </button>
+
+          <!-- Bóng đèn -->
+          <button onclick="window.spawnComponent('bulb')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-amber-500/15 border border-slate-700/80 hover:border-amber-400/60 transition-all duration-200 shadow hover:shadow-amber-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-amber-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-lightbulb text-xl text-amber-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Bóng đèn</span>
+            <span class="text-[10px] text-slate-400 font-mono">10 Ω</span>
+          </button>
+
+          <!-- Điện trở -->
+          <button onclick="window.spawnComponent('resistor')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-emerald-500/15 border border-slate-700/80 hover:border-emerald-400/60 transition-all duration-200 shadow hover:shadow-emerald-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-emerald-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-wave-square text-xl text-emerald-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Điện trở</span>
+            <span class="text-[10px] text-slate-400 font-mono">20 Ω</span>
+          </button>
+
+          <!-- Công tắc (Khóa K) -->
+          <button onclick="window.spawnComponent('switch')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-rose-500/15 border border-slate-700/80 hover:border-rose-400/60 transition-all duration-200 shadow hover:shadow-rose-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-rose-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-toggle-on text-xl text-rose-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Khóa K</span>
+            <span class="text-[10px] text-slate-400 font-mono">Đóng / Mở</span>
+          </button>
+
+          <!-- Dây dẫn -->
+          <button onclick="window.spawnComponent('wire')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-orange-500/15 border border-slate-700/80 hover:border-orange-400/60 transition-all duration-200 shadow hover:shadow-orange-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-orange-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-bezier-curve text-xl text-orange-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Dây dẫn</span>
+            <span class="text-[10px] text-slate-400 font-mono">Co giãn</span>
+          </button>
+
+          <!-- Ampe kế -->
+          <button onclick="window.spawnComponent('ammeter')"
+            class="group flex flex-col items-center justify-center p-3 rounded-xl bg-slate-800/70 hover:bg-purple-500/15 border border-slate-700/80 hover:border-purple-400/60 transition-all duration-200 shadow hover:shadow-purple-500/10 active:scale-95">
+            <div class="w-10 h-10 rounded-lg bg-slate-900 group-hover:bg-purple-500/20 flex items-center justify-center mb-1.5 transition">
+              <i class="fa-solid fa-gauge-high text-xl text-purple-400 group-hover:scale-110 transition"></i>
+            </div>
+            <span class="text-xs font-semibold text-slate-200 group-hover:text-white">Ampe kế</span>
+            <span class="text-[10px] text-slate-400 font-mono">Đo dòng (A)</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Hướng dẫn thao tác nhanh -->
+      <div class="p-3 rounded-xl bg-slate-800/40 border border-slate-800 text-[11px] text-slate-400 space-y-1.5 leading-relaxed">
+        <div class="font-bold text-slate-300 flex items-center gap-1.5">
+          <i class="fa-solid fa-circle-info text-sky-400"></i> Mẹo lắp mạch:
+        </div>
+        <p>• <strong class="text-slate-200">Kéo thả linh kiện:</strong> Giữ chuột trái vào thân linh kiện để di chuyển trên mặt bàn.</p>
+        <p>• <strong class="text-slate-200">Tự động bắt dính:</strong> Đưa 2 đầu chốt tròn lại gần nhau, chúng sẽ tự hút và nối điện.</p>
+        <p>• <strong class="text-slate-200">Xoay linh kiện:</strong> Chọn linh kiện rồi bấm phím <kbd class="px-1.5 py-0.5 bg-slate-900 border border-slate-700 rounded text-sky-400 font-mono">R</kbd>.</p>
+      </div>
+    </div>
+
+    <!-- Footer Cột Trái: Nút Đặt lại góc nhìn & Xóa bàn -->
+    <div class="p-3.5 border-t border-slate-800 space-y-2 bg-slate-900/60">
+      <button onclick="window.resetCameraView()"
+        class="w-full py-2 px-3 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-video text-sky-400"></i> Đặt lại góc nhìn chuẩn
+      </button>
+      <button onclick="window.clearAllComponents()"
+        class="w-full py-2 px-3 rounded-xl text-xs font-semibold bg-rose-950/50 hover:bg-rose-600 text-rose-300 hover:text-white border border-rose-800/60 flex items-center justify-center gap-2 transition">
+        <i class="fa-solid fa-trash-can"></i> Dọn sạch bàn thí nghiệm
+      </button>
+    </div>
+  </aside>
+
+  <!-- ================= Ở GIỮA: KHÔNG GIAN 3D (WORKSPACE - flex-1) ================= -->
+  <main class="flex-1 h-full relative bg-slate-950 overflow-hidden">
+
+    <!-- Nút Góc Trên Trái: Quay lại Menu chính -->
+    <a href="index.html"
+      class="absolute top-4 left-4 z-10 flex items-center gap-2 px-3.5 py-2 rounded-xl text-xs font-bold bg-slate-900/85 hover:bg-slate-800 text-slate-200 border border-slate-700/80 backdrop-blur-md shadow-xl transition">
+      <i class="fa-solid fa-arrow-left text-sky-400"></i>
+      <span>Quay lại Menu</span>
+    </a>
+
+    <!-- Thanh điều khiển Trung tâm Phía Trên: Chạy / Tạm dừng mô phỏng -->
+    <div class="absolute top-4 left-1/2 -translate-x-1/2 z-10 flex items-center gap-3 px-4 py-2 rounded-2xl bg-slate-900/90 border border-slate-700/80 backdrop-blur-md shadow-2xl">
+      <div class="flex items-center gap-2 pr-2 border-r border-slate-800">
+        <span id="sim-status-indicator" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+        <span id="sim-status-label" class="text-xs font-bold uppercase tracking-wider text-slate-200">Mạch đang hoạt động</span>
+      </div>
+
+      <button id="btn-sim-toggle" onclick="window.toggleSandboxSimulation()"
+        class="flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20 transition">
+        <i id="icon-sim-toggle" class="fa-solid fa-pause"></i>
+        <span id="text-sim-toggle">Tạm dừng</span>
+      </button>
+
+      <!-- Hiển thị nhanh tọa độ con trỏ 3D trên bàn -->
+      <div id="cursor-coords-badge" class="hidden md:flex items-center gap-1.5 pl-2 border-l border-slate-800 text-[11px] font-mono text-sky-400">
+        <i class="fa-solid fa-crosshairs text-slate-400"></i>
+        <span id="cursor-coords-text">X: 0.0 | Z: 0.0</span>
+      </div>
+    </div>
+
+    <!-- Hướng dẫn chuột Góc Trên Phải (Trong khung 3D) -->
+    <div class="absolute top-4 right-4 z-10 hidden xl:flex items-center gap-3 px-3 py-1.5 rounded-xl bg-slate-900/75 border border-slate-800/80 backdrop-blur text-[11px] text-slate-400">
+      <span><i class="fa-solid fa-computer-mouse text-sky-400 mr-1"></i>Trái: Xoay 360°</span>
+      <span><i class="fa-solid fa-arrows-up-down text-emerald-400 mr-1"></i>Lăn: Thu phóng</span>
+      <span><i class="fa-solid fa-arrows-up-down-left-right text-amber-400 mr-1"></i>Phải: Kéo bàn</span>
+    </div>
+
+    <!-- KHUNG VẼ 3D THREE.JS CHÍNH -->
+    <div id="sandbox-3d-canvas" class="w-full h-full cursor-grab active:cursor-grabbing"></div>
+
+    <!-- Góc Dưới Phải: Widget Lưu thiết kế có thể Thu gọn / Mở rộng thành dấu < -->
+    <div id="save-widget-wrapper" class="absolute bottom-5 right-5 z-20 flex items-center">
+      <!-- Khối nội dung khi mở rộng -->
+      <div id="save-widget-body" class="flex items-center gap-2.5 bg-slate-900/95 backdrop-blur-md border border-slate-700 p-2.5 rounded-2xl shadow-2xl mr-2 transition-all duration-300">
+        <input id="circuit-save-name" type="text" placeholder="Tên mạch (VD: Mạch nối tiếp)..."
+          class="w-44 px-3 py-1.5 text-xs rounded-xl bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500" />
+        <button onclick="window.saveCircuitDesign()"
+          class="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl text-xs font-bold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg shadow-indigo-500/20 transition whitespace-nowrap">
+          <i class="fa-solid fa-floppy-disk"></i>
+          <span>Lưu thiết kế</span>
+        </button>
+      </div>
+
+      <!-- Nút Thu gọn / Mở rộng (< / >) -->
+      <button id="btn-toggle-save-widget" onclick="window.toggleSaveWidget()" title="Thu gọn / Mở rộng hộp lưu"
+        class="w-10 h-10 rounded-2xl bg-slate-900/95 hover:bg-slate-800 border border-slate-700 text-sky-400 hover:text-white flex items-center justify-center shadow-2xl transition">
+        <i id="icon-toggle-save-widget" class="fa-solid fa-chevron-right text-xs"></i>
+      </button>
+    </div>
+
+  </main>
+
+  <!-- ================= CỘT PHẢI: BẢNG THÔNG SỐ LINH KIỆN (INSPECTOR - w-72) ================= -->
+  <aside class="w-72 h-full bg-slate-900/95 backdrop-blur-md border-l border-slate-800 flex flex-col justify-between z-20 shadow-2xl shrink-0">
+    <div>
+      <!-- Header Cột Phải -->
+      <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-sky-400"></i>
+          <h2 class="font-bold text-xs uppercase tracking-wider text-slate-200">Thông Số Linh Kiện</h2>
+        </div>
+        <span id="inspector-badge" class="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700 font-mono">
+          Chưa chọn
+        </span>
+      </div>
+
+      <!-- Trạng thái Mặc định: Khi chưa chọn linh kiện nào -->
+      <div id="inspector-empty" class="p-6 text-center my-8">
+        <div class="w-14 h-14 rounded-2xl bg-slate-800/80 border border-slate-700/60 flex items-center justify-center mx-auto mb-3 text-slate-500">
+          <i class="fa-solid fa-hand-pointer text-2xl animate-pulse"></i>
+        </div>
+        <p class="text-xs font-semibold text-slate-300 mb-1">Vui lòng chọn linh kiện</p>
+        <p class="text-[11px] text-slate-500 leading-relaxed">
+          Nhấp chuột trái vào bất kỳ linh kiện nào trên bàn thí nghiệm 3D để xem đại lượng đo đạc và điều chỉnh thông số.
+        </p>
+      </div>
+
+      <!-- Trạng thái Đang chọn linh kiện (Ẩn mặc định) -->
+      <div id="inspector-controls" class="p-4 space-y-4 hidden">
+        <!-- Tên & Loại linh kiện -->
+        <div class="p-3 rounded-xl bg-slate-800/60 border border-slate-700/60 flex items-center gap-3">
+          <div id="insp-icon-box" class="w-10 h-10 rounded-xl bg-sky-500/20 border border-sky-500/40 flex items-center justify-center text-sky-400 text-lg">
+            <i id="insp-icon" class="fa-solid fa-car-battery"></i>
+          </div>
+          <div>
+            <h3 id="insp-title" class="text-sm font-bold text-white leading-tight">Nguồn Pin DC</h3>
+            <p id="insp-id" class="text-[11px] font-mono text-slate-400">ID: #BAT-01</p>
+          </div>
+        </div>
+
+        <!-- Điều chỉnh Điện áp U (Hiện khi chọn Pin) -->
+        <div id="control-group-voltage" class="bg-slate-800/40 p-3 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between text-xs">
+            <label for="slider-voltage" class="font-medium text-slate-300">Hiệu điện thế (U)</label>
+            <span class="font-mono font-bold text-sky-400"><span id="val-voltage">9.0</span> V</span>
+          </div>
+          <input id="slider-voltage" type="range" min="1.5" max="24" step="0.5" value="9.0"
+            oninput="window.updateSelectedComponentParam('voltage', this.value)"
+            class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer accent-sky-400" />
+        </div>
+
+        <!-- Điều chỉnh Điện trở R (Hiện khi chọn Đèn hoặc Điện trở) -->
+        <div id="control-group-resistance" class="bg-slate-800/40 p-3 rounded-xl border border-slate-800 space-y-1.5">
+          <div class="flex justify-between text-xs">
+            <label for="slider-resistance" class="font-medium text-slate-300">Điện trở (R)</label>
+            <span class="font-mono font-bold text-emerald-400"><span id="val-resistance">10</span> Ω</span>
+          </div>
+          <input id="slider-resistance" type="range" min="1" max="100" step="1" value="10"
+            oninput="window.updateSelectedComponentParam('resistance', this.value)"
+            class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer accent-emerald-400" />
+        </div>
+
+        <!-- Điều khiển Đóng/Mở Công tắc (Hiện khi chọn Khóa K) -->
+        <div id="control-group-switch" class="bg-slate-800/40 p-3 rounded-xl border border-slate-800 hidden">
+          <div class="flex items-center justify-between">
+            <span class="text-xs font-medium text-slate-300">Trạng thái Khóa K:</span>
+            <button id="btn-toggle-switch-state" onclick="window.toggleSelectedSwitch()"
+              class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 hover:bg-emerald-500 text-white transition">
+              ĐANG ĐÓNG (Kín)
+            </button>
+          </div>
+        </div>
+
+        <!-- Bảng đo đại lượng thời gian thực trên linh kiện -->
+        <div class="p-3 rounded-xl bg-slate-950/80 border border-slate-800 space-y-2">
+          <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 border-b border-slate-800 pb-1.5">
+            <i class="fa-solid fa-Wave-square text-indigo-400 mr-1"></i> Đại lượng đo thời gian thực
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Cường độ dòng điện (I):</span>
+            <span id="readout-current" class="font-mono font-bold text-amber-400">0.00 A</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Độ sụt áp (U):</span>
+            <span id="readout-voltage" class="font-mono font-bold text-sky-400">0.00 V</span>
+          </div>
+          <div class="flex justify-between text-xs">
+            <span class="text-slate-400">Công suất tiêu thụ (P):</span>
+            <span id="readout-power" class="font-mono font-bold text-rose-400">0.00 W</span>
+          </div>
+        </div>
+
+        <!-- Các nút thao tác với linh kiện đang chọn -->
+        <div class="grid grid-cols-2 gap-2 pt-2">
+          <button onclick="window.rotateSelectedComponent()"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-rotate-right text-sky-400"></i> Xoay 90°
+          </button>
+          <button onclick="window.deleteSelectedComponent()"
+            class="py-2 px-3 rounded-xl text-xs font-semibold bg-rose-600 hover:bg-rose-500 text-white shadow-lg shadow-rose-600/20 flex items-center justify-center gap-1.5 transition">
+            <i class="fa-solid fa-trash-can"></i> Xóa linh kiện
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Thông số Tổng quan Toàn mạch ở chân Cột Phải -->
+    <div class="p-4 border-t border-slate-800 bg-slate-950/60 space-y-2">
+      <div class="flex items-center justify-between text-xs">
+        <span class="text-slate-400 font-medium">Tổng linh kiện trên bàn:</span>
+        <span id="stat-total-components" class="font-mono font-bold text-slate-200">0</span>
+      </div>
+      <div class="flex items-center justify-between text-xs">
+        <span class="text-slate-400 font-medium">Trạng thái mạch điện:</span>
+        <span id="stat-circuit-state" class="font-mono font-bold text-amber-400">Mạch hở</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Nhúng file lõi xử lý 3D Sandbox -->
+  <script src="sandbox-core.js"></script>
+</body>
+</html>

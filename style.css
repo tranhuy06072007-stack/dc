@@ -1,0 +1,27 @@
+::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    input[type="range"] { accent-color: #38bdf8; }
+
+    /* === BỔ SUNG: KHẮC PHỤC TRIỆT ĐỂ LỖI TRÀN CHỮ === */
+    /* 1. Đảm bảo tất cả các văn bản, thẻ span, p tự động xuống dòng, không tràn viền */
+    p, span, label, div {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+
+    /* 2. Cố định phần mô tả thông số ở bảng điều khiển bên trái */
+    #experiment-desc {
+      word-break: break-word;
+      overflow-wrap: break-word;
+      line-height: 1.5;
+      max-width: 100%;
+    }
+
+    /* 3. Giúp tên các bài thí nghiệm trong menu dropdown hiển thị trọn vẹn, không bị cắt cụt */
+    #menu-dropdown-box div[onclick] {
+      white-space: normal !important;
+      word-break: break-word;
+      line-height: 1.4;
+    }

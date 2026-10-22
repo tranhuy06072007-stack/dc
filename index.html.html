@@ -1,0 +1,1625 @@
+<!DOCTYPE html>
+<html lang="vi" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>V-LABS | Phòng Thí Nghiệm Ảo 3D Liên Môn KHTN</title>
+
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- FontAwesome CDN -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+
+  <!-- Three.js & OrbitControls CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+<link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans select-none">
+
+  <!-- ================= THANH ĐIỀU HƯỚNG (NAVBAR) ================= -->
+  <header class="bg-slate-900/90 backdrop-blur border-b border-slate-800 px-6 py-3 flex items-center justify-between sticky top-0 z-30">
+    <!-- Logo & Tên nền tảng -->
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-sky-500 to-indigo-600 flex items-center justify-center shadow-lg shadow-sky-500/20">
+        <i class="fa-solid fa-atom text-white text-xl animate-spin" style="animation-duration: 10s;"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-extrabold text-xl tracking-wider bg-gradient-to-r from-sky-400 to-indigo-400 bg-clip-text text-transparent">V-LABS</span>
+          <span class="text-[10px] uppercase font-semibold px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-400 border border-sky-500/20">3D Simulation</span>
+        </div>
+        <p class="text-xs text-slate-400">Nền tảng Phòng thí nghiệm ảo Khoa học Tự nhiên</p>
+      </div>
+    </div>
+
+    <!-- Menu Phân Cấp Khối Lớp & Môn Học (Chuẩn Kết Nối Tri Thức) -->
+    <nav class="flex items-center gap-2 relative">
+      <div class="relative">
+        <button onclick="toggleMenuDropdown(event)" class="flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-semibold bg-slate-800 text-slate-200 hover:bg-slate-700 border border-slate-700 transition">
+          <i class="fa-solid fa-graduation-cap text-sky-400"></i>
+          <span>Chọn Khối Lớp & Môn</span>
+          <i class="fa-solid fa-chevron-down text-xs ml-1 text-slate-400"></i>
+        </button>
+
+        <!-- Dropdown Menu Đa Cấp -->
+        <div id="menu-dropdown-box" class="absolute left-0 mt-2 w-72 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl hidden z-50 p-2 space-y-2 max-h-[80vh] overflow-y-auto">
+          
+          <!-- KHỐI LỚP 6 -->
+          <div class="p-2 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div class="text-xs font-bold text-sky-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-school text-[10px]"></i> KHỐI LỚP 6
+            </div>
+            <div class="space-y-1 text-xs pl-2">
+              <div class="font-semibold text-slate-300 mt-1">Vật Lý:</div>
+              <div onclick="selectSubject('physics', '6-1')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Đo chiều dài - khối lượng - thời gian</div>
+              <div onclick="selectSubject('physics', '6-2')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Biến dạng lò xo (Định luật Hooke)</div>
+              <div onclick="selectSubject('physics', '6-3')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Lực ma sát</div>
+              
+              <div class="font-semibold text-slate-300 mt-1.5">Hóa Học:</div>
+              <div onclick="selectSubject('chemistry', '6-4')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Sự chuyển thể của chất</div>
+              <div onclick="selectSubject('chemistry', '6-5')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Oxygen và không khí</div>
+              <div onclick="selectSubject('chemistry', '6-6')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tách chất bằng phương pháp lọc & cô cạn</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Sinh Học:</div>
+              <div onclick="selectSubject('biology', '6-7')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Sử dụng kính lúp & kính hiển vi</div>
+              <div onclick="selectSubject('biology', '6-8')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tế bào thực vật và động vật</div>
+              <div onclick="selectSubject('biology', '6-9')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Quan sát vi khuẩn (làm sữa chua)</div>
+            </div>
+          </div>
+
+          <!-- KHỐI LỚP 7 -->
+          <div class="p-2 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div class="text-xs font-bold text-emerald-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-school text-[10px]"></i> KHỐI LỚP 7
+            </div>
+            <div class="space-y-1 text-xs pl-2">
+              <div class="font-semibold text-slate-300 mt-1">Vật Lý:</div>
+              <div onclick="selectSubject('physics', '7-1')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Đo tốc độ chuyển động</div>
+              <div onclick="selectSubject('physics', '7-2')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tần số và độ cao của âm</div>
+              <div onclick="selectSubject('physics', '7-3')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Sự phản xạ ánh sáng</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Hóa Học:</div>
+              <div onclick="selectSubject('chemistry', '7-4')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Xây dựng mô hình nguyên tử</div>
+              <div onclick="selectSubject('chemistry', '7-5')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Bảng tuần hoàn các nguyên tố hóa học</div>
+              <div onclick="selectSubject('chemistry', '7-6')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tốc độ phản ứng hóa học cơ bản</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Sinh Học:</div>
+              <div onclick="selectSubject('biology', '7-7')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Quang hợp ở cây xanh (thoát bọt khí)</div>
+              <div onclick="selectSubject('biology', '7-8')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Hô hấp ở thực vật</div>
+              <div onclick="selectSubject('biology', '7-9')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Vận chuyển nước & thoát hơi nước ở lá</div>
+            </div>
+          </div>
+
+          <!-- KHỐI LỚP 8 -->
+          <div class="p-2 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div class="text-xs font-bold text-amber-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-school text-[10px]"></i> KHỐI LỚP 8
+            </div>
+            <div class="space-y-1 text-xs pl-2">
+              <div class="font-semibold text-slate-300 mt-1">Vật Lý:</div>
+              <div onclick="selectSubject('physics', '8-1')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Xác định khối lượng riêng</div>
+              <div onclick="selectSubject('physics', '8-2')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Áp suất chất lỏng & lực đẩy Archimedes</div>
+              <div onclick="selectSubject('physics', '8-3')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Năng lượng nhiệt và đòn bẩy</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Hóa Học:</div>
+              <div onclick="selectSubject('chemistry', '8-4')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Định luật bảo toàn khối lượng</div>
+              <div onclick="selectSubject('chemistry', '8-5')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Dung dịch và độ tan</div>
+              <div onclick="selectSubject('chemistry', '8-6')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tính chất Acid, Base và thang đo pH</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Sinh Học:</div>
+              <div onclick="selectSubject('biology', '8-7')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Quan sát tế bào và mô cơ thể người</div>
+              <div onclick="selectSubject('biology', '8-8')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Tiêu hóa và hô hấp ở người</div>
+              <div onclick="selectSubject('biology', '8-9')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Quan sát hệ sinh thái</div>
+            </div>
+          </div>
+
+          <!-- KHỐI LỚP 9 -->
+          <div class="p-2 rounded-lg bg-slate-800/60 border border-slate-700/50">
+            <div class="text-xs font-bold text-rose-400 mb-1.5 flex items-center gap-1.5">
+              <i class="fa-solid fa-school text-[10px]"></i> KHỐI LỚP 9
+            </div>
+            <div class="space-y-1 text-xs pl-2">
+              <div class="font-semibold text-slate-300 mt-1">Vật Lý:</div>
+              <div onclick="selectSubject('physics', '9-1')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Hiện tượng khúc xạ ánh sáng</div>
+              <div onclick="selectSubject('physics', '9-2')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Đo tiêu cự thấu kính hội tụ</div>
+              <div onclick="selectSubject('physics', '9-3')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Định luật Ohm và mạch điện</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Hóa Học:</div>
+              <div onclick="selectSubject('chemistry', '9-4')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Hydrocarbon (Metan, Etilen)</div>
+              <div onclick="selectSubject('chemistry', '9-5')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Ethanol và Acid acetic</div>
+              <div onclick="selectSubject('chemistry', '9-6')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Glucid và Protein cơ bản</div>
+
+              <div class="font-semibold text-slate-300 mt-1.5">Sinh Học:</div>
+              <div onclick="selectSubject('biology', '9-7')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Thí nghiệm các quy luật di truyền</div>
+              <div onclick="selectSubject('biology', '9-8')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Mô hình cấu trúc không gian ADN</div>
+              <div onclick="selectSubject('biology', '9-9')" class="py-1 px-2 rounded hover:bg-slate-700 cursor-pointer text-slate-400 hover:text-white truncate">• Di truyền học và ứng dụng</div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+	  <!-- 👉 NÚT CHUYỂN SANG TRANG PHÒNG THÍ NGHIỆM TỰ DO (SANDBOX) -->
+      <a href="sandbox.html" target="_blank" class="ml-2 flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-bold bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-500 hover:to-indigo-500 shadow-lg shadow-purple-500/20 border border-purple-400/30 transition">
+        <i class="fa-solid fa-cubes"></i> Thiết Kế Tự Do
+      </a>
+    </nav>
+<!-- Ô THANH TÌM KIẾM THÍ NGHIỆM MỚI -->
+    <div class="relative hidden md:block w-64">
+      <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-slate-400">
+        <i class="fa-solid fa-magnifying-glass text-xs"></i>
+      </div>
+      <input id="experiment-search-input" type="text" oninput="handleExperimentSearch(this.value)" placeholder="Tìm kiếm thí nghiệm (VD: Con lắc, ADN...)"
+        class="w-full pl-9 pr-8 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500 transition" />
+      <button id="clear-search-btn" onclick="clearExperimentSearch()" class="absolute inset-y-0 right-0 pr-2.5 flex items-center text-slate-400 hover:text-white hidden">
+        <i class="fa-solid fa-xmark text-xs"></i>
+      </button>
+      
+      <!-- Hộp popup hiển thị kết quả tìm kiếm -->
+      <div id="search-dropdown" class="absolute left-0 right-0 mt-2 bg-slate-900 border border-slate-700 rounded-xl shadow-2xl hidden z-50 overflow-hidden max-h-60 overflow-y-auto">
+        <div id="search-results-list" class="p-1 space-y-1"></div>
+        <div id="search-no-result" class="p-3 text-center text-xs text-rose-400 hidden">
+          <i class="fa-solid fa-triangle-exclamation mr-1"></i>Không tìm thấy thí nghiệm phù hợp
+        </div>
+      </div>
+    </div>
+	
+	<!-- Nút Cộng đồng V-LABS -->
+    <button onclick="openForum()" class="hidden md:flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium text-emerald-300 bg-emerald-500/10 hover:bg-emerald-500/20 border border-emerald-500/30 transition mr-3">
+      <i class="fa-solid fa-earth-asia"></i> Diễn đàn KHTN
+    </button>
+    <!-- Khu vực Tài khoản -->
+    <div id="auth-section" class="flex items-center gap-3">
+      <!-- Trạng thái chưa đăng nhập -->
+      <div id="guest-view" class="flex items-center gap-2">
+        <button onclick="openAuthModal('login')"
+          class="px-3.5 py-2 rounded-lg text-sm font-medium text-slate-200 hover:bg-slate-800 border border-slate-700 transition">
+          <i class="fa-solid fa-right-to-bracket mr-1.5 text-sky-400"></i>Đăng nhập
+        </button>
+        <button onclick="openAuthModal('register')"
+          class="px-3.5 py-2 rounded-lg text-sm font-semibold bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow transition">
+          <i class="fa-solid fa-user-plus mr-1.5"></i>Đăng ký
+        </button>
+      </div>
+
+      <!-- Trạng thái đã đăng nhập (Đã tích hợp Gamification UI) -->
+      <div id="user-view" class="hidden items-center gap-3 bg-slate-800/90 px-3.5 py-2 rounded-xl border border-slate-700 shadow-inner">
+        <!-- Avatar & Badge Cấp độ -->
+        <div class="relative">
+          <div class="w-9 h-9 rounded-full bg-sky-500/20 border border-sky-400/40 flex items-center justify-center text-sky-300 font-bold text-sm">
+            <i class="fa-solid fa-user-astronaut"></i>
+          </div>
+          <span id="user-level-badge" class="absolute -bottom-1 -right-1 px-1.5 py-0.2 rounded-full bg-indigo-600 text-[9px] font-extrabold text-white border border-slate-900 shadow">
+            Lv.1
+          </span>
+        </div>
+
+        <!-- Thông tin Danh hiệu, Tên, Streak & Thanh XP -->
+        <div class="text-left min-w-[165px]">
+          <div class="flex items-center justify-between gap-2">
+            <p id="user-tier-title" class="text-[11px] font-bold text-emerald-400 leading-none">
+              🟢 Thực Tập Sinh
+            </p>
+            <!-- Bộ đếm Chuỗi ngày (Streak) -->
+            <span class="flex items-center gap-0.5 text-[11px] font-extrabold text-amber-400 bg-amber-500/10 px-1.5 py-0.5 rounded-md border border-amber-500/20" title="Chuỗi ngày đăng nhập liên tiếp">
+              🔥 <span id="user-streak-count">0</span>
+            </span>
+          </div>
+
+          <p id="display-username" class="text-xs font-semibold text-slate-100 leading-tight mt-0.5 truncate max-w-[140px]"></p>
+
+          <!-- Thanh Progress Bar XP -->
+          <div class="mt-1">
+            <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
+              <div id="user-xp-bar" class="h-full bg-gradient-to-r from-sky-400 to-indigo-500 transition-all duration-500" style="width: 0%"></div>
+            </div>
+            <p id="user-xp-text" class="text-[9px] font-mono text-slate-400 mt-0.5 text-right leading-none">
+              0 / 100 XP
+            </p>
+          </div>
+        </div>
+
+        <!-- Nút Đăng xuất -->
+        <button onclick="handleLogout()" title="Đăng xuất"
+          class="ml-1 text-slate-400 hover:text-rose-400 transition p-1.5 rounded-lg hover:bg-slate-700/50">
+          <i class="fa-solid fa-power-off"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ================= KHÔNG GIAN LÀM VIỆC CHÍNH ================= -->
+  <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-4 p-4 max-w-[1600px] w-full mx-auto">
+
+    <!-- CỘT TRÁI: BẢNG ĐIỀU KHIỂN THÔNG SỐ (3 CỘT) -->
+    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+      <div>
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-4">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-sliders text-sky-400"></i>
+            <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Bảng Điều Khiển Thông Số</h2>
+          </div>
+          <span id="subject-badge" class="text-xs px-2.5 py-0.5 rounded-full bg-sky-500/15 text-sky-300 border border-sky-500/30 font-medium">
+            Vật Lý
+          </span>
+        </div>
+
+        <p id="experiment-desc" class="text-xs text-slate-400 mb-4 leading-relaxed bg-slate-800/50 p-3 rounded-xl border border-slate-700/50">
+          Mô phỏng dao động con lắc đơn & mạch điện 3D. Thay đổi các thanh trượt bên dưới để quan sát sự biến thiên theo thời gian thực.
+        </p>
+
+        <!-- Các thanh trượt thông số -->
+        <div class="space-y-4">
+          <!-- Thông số 1 -->
+          <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-xs mb-1.5">
+              <label id="label-param1" for="param1" class="font-medium text-slate-300">Chiều dài dây / Điện áp (U)</label>
+              <span class="font-mono font-bold text-sky-400"><span id="val-param1">50</span> <span id="unit-param1">cm / V</span></span>
+            </div>
+            <input id="param1" type="range" min="10" max="100" value="50" oninput="onParamsChange()"
+              class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer" />
+          </div>
+
+          <!-- Thông số 2 -->
+          <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-xs mb-1.5">
+              <label id="label-param2" for="param2" class="font-medium text-slate-300">Gia tốc trọng trường (g) / Điện trở</label>
+              <span class="font-mono font-bold text-indigo-400"><span id="val-param2">9.8</span> <span id="unit-param2">m/s² / Ω</span></span>
+            </div>
+            <input id="param2" type="range" min="1" max="25" step="0.2" value="9.8" oninput="onParamsChange()"
+              class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer" />
+          </div>
+
+          <!-- Thông số 3 -->
+          <div class="bg-slate-800/40 p-3 rounded-xl border border-slate-800">
+            <div class="flex justify-between text-xs mb-1.5">
+              <label id="label-param3" for="param3" class="font-medium text-slate-300">Tốc độ mô phỏng (Speed)</label>
+              <span class="font-mono font-bold text-emerald-400"><span id="val-param3">1.0</span> <span id="unit-param3">x</span></span>
+            </div>
+            <input id="param3" type="range" min="0.2" max="3.0" step="0.1" value="1.0" oninput="onParamsChange()"
+              class="w-full h-2 bg-slate-700 rounded-lg cursor-pointer" />
+          </div>
+
+          <!-- Ghi chú nhanh cho báo cáo -->
+          <div class="pt-1">
+            <label for="report-note" class="block text-xs font-medium text-slate-300 mb-1.5">
+              <i class="fa-regular fa-pen-to-square mr-1 text-sky-400"></i>Ghi chú quan sát thí nghiệm:
+            </label>
+            <input id="report-note" type="text" placeholder="VD: Chu kỳ tăng khi tăng chiều dài dây..."
+              class="w-full px-3 py-2 text-xs rounded-xl bg-slate-800 border border-slate-700 text-slate-100 placeholder-slate-500 focus:outline-none focus:border-sky-500" />
+          </div>
+        </div>
+      </div>
+
+      <!-- Cụm nút Bắt đầu / Đặt lại -->
+      <div class="pt-4 border-t border-slate-800 mt-4 grid grid-cols-2 gap-2.5">
+        <button id="btn-toggle-sim" onclick="toggleSimulation()"
+          class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition">
+          <i id="icon-toggle-sim" class="fa-solid fa-play"></i>
+          <span id="text-toggle-sim">Bắt đầu</span>
+        </button>
+        <button onclick="resetSimulation()"
+          class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition">
+          <i class="fa-solid fa-rotate-left text-amber-400"></i>
+          <span>Đặt lại</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- CỘT GIỮA: KHUNG HIỂN THỊ MÔ PHỎNG 3D (6 CỘT) -->
+    <section class="lg:col-span-6 bg-slate-900 border border-slate-800 rounded-2xl flex flex-col overflow-hidden shadow-xl relative min-h-[480px]">
+      <!-- Thanh trạng thái trên khung 3D -->
+      <div class="px-4 py-2.5 bg-slate-900/90 border-b border-slate-800 flex items-center justify-between z-10">
+        <div class="flex items-center gap-2">
+          <span id="sim-status-dot" class="w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse"></span>
+          <h3 id="canvas-title" class="text-xs font-bold uppercase tracking-wider text-slate-200">
+            Không gian 3D: Con lắc & Mạch điện (Vật Lý)
+          </h3>
+        </div>
+        <div class="flex items-center gap-3 text-[11px] text-slate-400">
+          <span><i class="fa-solid fa-computer-mouse mr-1 text-sky-400"></i>Xoay: Chuột trái</span>
+          <span><i class="fa-solid fa-magnifying-glass-plus mr-1 text-sky-400"></i>Thu phóng: Con lăn</span>
+        </div>
+      </div>
+
+      <!-- KHUNG HIỂN THỊ 3D CHÍNH -->
+      <div id="canvas-3d-container" class="flex-1 w-full h-full relative bg-gradient-to-b from-slate-950 via-slate-900 to-slate-950 flex items-center justify-center overflow-hidden">
+        <!-- Placeholder hiển thị khi chưa gắn code Three.js ở Bước 2 -->
+        <div id="canvas-placeholder" class="text-center p-6 max-w-md pointer-events-none">
+          <div class="w-16 h-16 rounded-2xl bg-sky-500/10 border border-sky-500/30 flex items-center justify-center mx-auto mb-3 text-sky-400">
+            <i class="fa-solid fa-cube text-3xl animate-bounce"></i>
+          </div>
+          <p class="text-sm font-semibold text-slate-200 mb-1">Khung kết xuất 3D (#canvas-3d-container)</p>
+          <p id="placeholder-live-info" class="text-xs text-sky-400 font-mono mb-2">
+            Môn: physics | P1: 50 | P2: 9.8 | P3: 1.0
+          </p>
+          <p class="text-xs text-slate-400">
+            Sẵn sàng nhận dữ liệu từ hàm <code class="text-amber-300">render3DSimulation(subject, params)</code>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- CỘT PHẢI: BẢNG LƯU TRỮ ĐÁM MÂY (3 CỘT) -->
+    <aside class="lg:col-span-3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col justify-between shadow-xl">
+      <div class="flex flex-col h-full">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-3 mb-3">
+          <div class="flex items-center gap-2">
+            <i class="fa-solid fa-cloud-arrow-up text-indigo-400"></i>
+            <h2 class="font-bold text-sm uppercase tracking-wider text-slate-200">Lưu Trữ Đám Mây</h2>
+          </div>
+          <span id="cloud-count-badge" class="text-xs px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 font-mono">
+            0 bản ghi
+          </span>
+        </div>
+
+        <!-- Nút Lưu báo cáo lên Cloud giả lập -->
+        <button onclick="saveReportToCloud()"
+          class="w-full py-2.5 px-4 mb-4 rounded-xl font-semibold text-sm bg-gradient-to-r from-indigo-600 to-sky-600 hover:from-indigo-500 hover:to-sky-500 text-white shadow-lg shadow-indigo-600/20 flex items-center justify-center gap-2 transition">
+          <i class="fa-solid fa-cloud-bolt"></i>
+          <span>Lưu báo cáo thí nghiệm lên Cloud</span>
+        </button>
+
+        <!-- Tiêu đề danh sách lịch sử -->
+        <div class="flex items-center justify-between text-xs text-slate-400 mb-2">
+          <span><i class="fa-solid fa-clock-rotate-left mr-1"></i>Lịch sử báo cáo của tài khoản:</span>
+          <button onclick="clearAllUserReports()" class="text-[11px] text-rose-400 hover:underline">Xóa tất cả</button>
+        </div>
+
+        <!-- Danh sách lịch sử báo cáo -->
+        <div id="cloud-history-list" class="flex-1 overflow-y-auto space-y-2.5 pr-1 max-h-[380px]">
+          <!-- Được render tự động bằng JavaScript -->
+        </div>
+      </div>
+    </aside>
+
+  </main>
+
+  <!-- ================= MODAL ĐĂNG NHẬP / ĐĂNG KÝ ================= -->
+  <div id="auth-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-sm z-50 hidden items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl relative">
+      <!-- Nút đóng Modal -->
+      <button onclick="closeAuthModal()" class="absolute top-4 right-4 text-slate-400 hover:text-white">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+
+      <!-- Chuyển tab Đăng nhập / Đăng ký -->
+      <div class="flex gap-2 bg-slate-800 p-1 rounded-xl mb-5 w-4/5">
+        <button id="modal-tab-login" onclick="switchAuthMode('login')"
+          class="flex-1 py-1.5 text-xs font-bold rounded-lg bg-sky-600 text-white transition">
+          Đăng nhập
+        </button>
+        <button id="modal-tab-register" onclick="switchAuthMode('register')"
+          class="flex-1 py-1.5 text-xs font-bold rounded-lg text-slate-400 hover:text-white transition">
+          Đăng ký tài khoản
+        </button>
+      </div>
+
+      <h3 id="auth-modal-title" class="text-lg font-bold text-white mb-1">Chào mừng trở lại V-LABS</h3>
+      <p id="auth-modal-subtitle" class="text-xs text-slate-400 mb-4">Đăng nhập để đồng bộ các báo cáo thí nghiệm 3D lên đám mây.</p>
+
+      <!-- Thông báo lỗi / thành công -->
+      <div id="auth-alert" class="hidden text-xs p-2.5 rounded-xl mb-3 border"></div>
+
+      <form id="auth-form" onsubmit="handleAuthSubmit(event)" class="space-y-3.5">
+        <div id="fullname-group" class="hidden">
+          <label class="block text-xs text-slate-300 mb-1">Họ và tên hiển thị</label>
+          <input id="auth-fullname" type="text" placeholder="VD: Trần Quốc Huy"
+            class="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Tên tài khoản (Username)</label>
+          <input id="auth-username" type="text" required placeholder="Nhập username..."
+            class="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
+        </div>
+
+        <div>
+          <label class="block text-xs text-slate-300 mb-1">Mật khẩu</label>
+          <input id="auth-password" type="password" required placeholder="••••••••"
+            class="w-full px-3.5 py-2 text-sm rounded-xl bg-slate-800 border border-slate-700 text-white focus:outline-none focus:border-sky-500" />
+        </div>
+
+        <button type="submit" id="auth-submit-btn"
+          class="w-full py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-sky-500 to-indigo-600 hover:from-sky-400 hover:to-indigo-500 text-white shadow-lg transition mt-2">
+          Đăng nhập ngay
+        </button>
+      </form>
+    </div>
+  </div>
+
+<!-- ================= TOAST NOTIFICATION (GAMIFICATION) ================= -->
+  <div id="xp-toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2.5 pointer-events-none"></div>
+  
+  <!-- ================= JAVASCRIPT LOGIC ================= -->
+  <script>
+    // --- 1. CẤU HÌNH DỮ LIỆU 3 PHÂN MÔN ---
+    const SUBJECT_CONFIG = {
+      // --- VẬT LÝ KHỐI 6 ---
+      '6-1': {
+        name: 'Đo chiều dài, khối lượng, thời gian',
+        title: 'Khối 6 - Vật Lý: Đo đạc đại lượng cơ bản',
+        desc: 'Thực hành đo chiều dài bằng thước, khối lượng bằng cân và thời gian bằng đồng hồ bấm giờ.',
+        p1: { label: 'Chiều dài vật (L)', min: 1, max: 100, step: 0.5, val: 25, unit: 'cm' },
+        p2: { label: 'Khối lượng mẫu (m)', min: 10, max: 1000, step: 10, val: 150, unit: 'g' },
+        p3: { label: 'Thời gian đo (t)', min: 1, max: 60, step: 1, val: 10, unit: 's' }
+      },
+      '6-2': {
+        name: 'Biến dạng lò xo (Định luật Hooke)',
+        title: 'Khối 6 - Vật Lý: Biến dạng của lò xo',
+        desc: 'Khảo sát độ dãn của lò xo treo vật nặng theo Định luật Hooke (F = k * Δl).',
+        p1: { label: 'Khối lượng quả nặng (m)', min: 20, max: 500, step: 10, val: 100, unit: 'g' },
+        p2: { label: 'Độ cứng lò xo (k)', min: 10, max: 100, step: 5, val: 40, unit: 'N/m' },
+        p3: { label: 'Tốc độ kéo dãn', min: 0.2, max: 2.0, step: 0.1, val: 1.0, unit: 'x' }
+      },
+      '6-3': {
+        name: 'Lực ma sát',
+        title: 'Khối 6 - Vật Lý: Khảo sát Lực ma sát',
+        desc: 'Nghiên cứu lực ma sát trượt và ma sát nghỉ giữa các bề mặt vật liệu khác nhau.',
+        p1: { label: 'Khối lượng vật trượt (m)', min: 50, max: 2000, step: 50, val: 500, unit: 'g' },
+        p2: { label: 'Hệ số ma sát (μ)', min: 0.05, max: 0.9, step: 0.05, val: 0.3, unit: '' },
+        p3: { label: 'Lực kéo tác dụng (F)', min: 1, max: 20, step: 0.5, val: 5, unit: 'N' }
+      },
+
+      // --- HÓA HỌC KHỐI 6 ---
+      '6-4': {
+        name: 'Sự chuyển thể của chất',
+        title: 'Khối 6 - Hóa Học: Sự chuyển thể (Rắn - Lỏng - Khí)',
+        desc: 'Quan sát quá trình nóng chảy, đông đặc, hóa hơi và ngưng tụ của các chất dưới tác dụng nhiệt.',
+        p1: { label: 'Nhiệt độ đun nóng (T)', min: -20, max: 120, step: 1, val: 25, unit: '°C' },
+        p2: { label: 'Khối lượng chất rắn (m)', min: 10, max: 200, step: 5, val: 50, unit: 'g' },
+        p3: { label: 'Tốc độ gia nhiệt', min: 0.2, max: 3.0, step: 0.1, val: 1.0, unit: 'x' }
+      },
+      '6-5': {
+        name: 'Oxygen và không khí',
+        title: 'Khối 6 - Hóa Học: Oxygen & Thành phần không khí',
+        desc: 'Khảo sát tính chất của khí oxygen và tỉ lệ phần trăm thể tích khí oxygen trong không khí.',
+        p1: { label: 'Thể tích bình chứa (V)', min: 100, max: 2000, step: 50, val: 500, unit: 'ml' },
+        p2: { label: 'Lượng chất đốt (Than/Photpho)', min: 0.5, max: 10, step: 0.5, val: 2.0, unit: 'g' },
+        p3: { label: 'Nhiệt độ kích hoạt', min: 20, max: 400, step: 10, val: 100, unit: '°C' }
+      },
+      '6-6': {
+        name: 'Tách chất bằng phương pháp lọc & cô cạn',
+        title: 'Khối 6 - Hóa Học: Tách chất khỏi hỗn hợp',
+        desc: 'Thực hành tách hỗn hợp chất rắn không tan (lọc) và chất rắn hòa tan (cô cạn dung dịch).',
+        p1: { label: 'Nồng độ dung dịch muối (C)', min: 1, max: 35, step: 1, val: 15, unit: '%' },
+        p2: { label: 'Lượng chất rắn lẫn vào', min: 5, max: 100, step: 5, val: 20, unit: 'g' },
+        p3: { label: 'Tốc độ lọc / bay hơi', min: 0.2, max: 3.0, step: 0.1, val: 1.0, unit: 'x' }
+      },
+
+      // --- SINH HỌC KHỐI 6 ---
+      '6-7': {
+        name: 'Sử dụng kính lúp & kính hiển vi quang học',
+        title: 'Khối 6 - Sinh Học: Kính lúp & Kính hiển vi quang học',
+        desc: 'Làm quen với các bộ phận của kính hiển vi và cách điều chỉnh tiêu cự để quan sát mẫu vật.',
+        p1: { label: 'Độ phóng đại vật kính', min: 4, max: 40, step: 4, val: 10, unit: 'x' },
+        p2: { label: 'Độ phóng đại thị kính', min: 5, max: 20, step: 5, val: 10, unit: 'x' },
+        p3: { label: 'Độ sáng đèn chiếu', min: 10, max: 100, step: 5, val: 50, unit: '%' }
+      },
+      '6-8': {
+        name: 'Tế bào thực vật và động vật',
+        title: 'Khối 6 - Sinh Học: Cấu trúc Tế bào',
+        desc: 'Quan sát các thành phần cơ bản của tế bào thực vật (vách tế bào, lục lạp) và tế bào động vật.',
+        p1: { label: 'Độ phóng đại hiển vi', min: 100, max: 1000, step: 50, val: 400, unit: 'x' },
+        p2: { label: 'Nồng độ thuốc nhuộm (Methylene Blue)', min: 0.1, max: 2.0, step: 0.1, val: 0.5, unit: '%' },
+        p3: { label: 'Độ tương phản ảnh', min: 1, max: 10, step: 0.5, val: 5.0, unit: '' }
+      },
+      '6-9': {
+        name: 'Quan sát vi khuẩn (làm sữa chua)',
+        title: 'Khối 6 - Sinh Học: Vi khuẩn & Lên men sữa chua',
+        desc: 'Khảo sát điều kiện nhiệt độ và thời gian tối ưu cho vi khuẩn lactic lên men sữa chua.',
+        p1: { label: 'Nhiệt độ ủ men (T)', min: 25, max: 50, step: 1, val: 40, unit: '°C' },
+        p2: { label: 'Thời gian ủ (t)', min: 2, max: 24, step: 1, val: 8, unit: 'giờ' },
+        p3: { label: 'Tỉ lệ men giống ban đầu', min: 1, max: 20, step: 1, val: 5, unit: '%' },
+      },
+	  // --- VẬT LÝ KHỐI 7 ---
+      '7-1': {
+        name: 'Đo tốc độ chuyển động',
+        title: 'Khối 7 - Vật Lý: Đo tốc độ chuyển động',
+        desc: 'Thực hành đo quãng đường và thời gian chuyển động của xe đồ chơi hoặc học sinh.',
+        p1: { label: 'Quãng đường (s)', min: 1, max: 50, step: 0.5, val: 10, unit: 'm' },
+        p2: { label: 'Thời gian chuyển động (t)', min: 1, max: 30, step: 0.5, val: 5, unit: 's' },
+        p3: { label: 'Hệ số cản trở gió', min: 0.0, max: 1.0, step: 0.1, val: 0.2, unit: '' }
+      },
+      '7-2': {
+        name: 'Âm thanh (tần số và độ cao)',
+        title: 'Khối 7 - Vật Lý: Âm thanh (Tần số và độ cao)',
+        desc: 'Khảo sát dao động của âm thoa hoặc dây đàn, tần số (Hz) quyết định độ cao của âm.',
+        p1: { label: 'Tần số dao động (f)', min: 50, max: 2000, step: 25, val: 440, unit: 'Hz' },
+        p2: { label: 'Biên độ sóng âm (A)', min: 0.1, max: 5.0, step: 0.1, val: 1.5, unit: 'cm' },
+        p3: { label: 'Tốc độ truyền âm', min: 300, max: 1500, step: 50, val: 340, unit: 'm/s' }
+      },
+      '7-3': {
+        name: 'Sự phản xạ ánh sáng',
+        title: 'Khối 7 - Vật Lý: Sự phản xạ ánh sáng',
+        desc: 'Khảo sát định luật phản xạ ánh sáng qua gương phẳng (Góc tới i = Góc phản xạ i\').',
+        p1: { label: 'Góc tới tia sáng (i)', min: 0, max: 85, step: 1, val: 45, unit: '°' },
+        p2: { label: 'Chiết suất môi trường gương', min: 1.0, max: 2.5, step: 0.1, val: 1.5, unit: '' },
+        p3: { label: 'Cường độ nguồn sáng', min: 10, max: 100, step: 5, val: 80, unit: '%' }
+      },
+
+      // --- HÓA HỌC KHỐI 7 ---
+      '7-4': {
+        name: 'Xây dựng mô hình nguyên tử',
+        title: 'Khối 7 - Hóa Học: Xây dựng mô hình nguyên tử',
+        desc: 'Khám phá cấu tạo hạt nhân (proton, neutron) và các lớp vỏ electron quay xung quanh.',
+        p1: { label: 'Số hiệu nguyên tử (Z)', min: 1, max: 20, step: 1, val: 6, unit: 'proton' },
+        p2: { label: 'Số lớp electron', min: 1, max: 4, step: 1, val: 2, unit: 'lớp' },
+        p3: { label: 'Tốc độ quay của electron', min: 0.5, max: 5.0, step: 0.25, val: 2.0, unit: 'x' }
+      },
+      '7-5': {
+        name: 'Bảng tuần hoàn các nguyên tố hóa học',
+        title: 'Khối 7 - Hóa Học: Bảng tuần hoàn các nguyên tố hóa học',
+        desc: 'Nghiên cứu quy luật sắp xếp các nguyên tố theo chu kỳ và nhóm trong bảng tuần hoàn.',
+        p1: { label: 'Chọn số thứ tự nguyên tố (Z)', min: 1, max: 20, step: 1, val: 11, unit: '' },
+        p2: { label: 'Nhiệt độ môi trường', min: 0, max: 100, step: 5, val: 25, unit: '°C' },
+        p3: { label: 'Độ linh hoạt tương tác', min: 1, max: 5, step: 1, val: 3, unit: '' }
+      },
+      '7-6': {
+        name: 'Tốc độ phản ứng hóa học',
+        title: 'Khối 7 - Hóa Học: Tốc độ phản ứng hóa học',
+        desc: 'Khảo sát các yếu tố ảnh hưởng đến tốc độ phản ứng (diện tích bề mặt, nhiệt độ, chất xúc tác).',
+        p1: { label: 'Nhiệt độ dung dịch (T)', min: 20, max: 90, step: 2, val: 30, unit: '°C' },
+        p2: { label: 'Kích thước hạt chất rắn', min: 0.1, max: 5.0, step: 0.1, val: 1.5, unit: 'mm' },
+        p3: { label: 'Nồng độ chất xúc tác', min: 0.0, max: 2.0, step: 0.1, val: 0.5, unit: 'mol/L' }
+      },
+
+      // --- SINH HỌC KHỐI 7 ---
+      '7-7': {
+        name: 'Quang hợp ở cây xanh (thoát khí oxygen)',
+        title: 'Khối 7 - Sinh Học: Quang hợp ở cây xanh (thoát khí oxygen)',
+        desc: 'Thí nghiệm chứng minh cây xanh thải khí oxygen và tổng hợp chất hữu cơ dưới ánh sáng.',
+        p1: { label: 'Cường độ ánh sáng chiếu', min: 10, max: 100, step: 5, val: 75, unit: '%' },
+        p2: { label: 'Nồng độ khí CO2 hòa tan', min: 0.01, max: 0.5, step: 0.01, val: 0.05, unit: '%' },
+        p3: { label: 'Nhiệt độ nước quang hợp', min: 15, max: 40, step: 1, val: 25, unit: '°C' }
+      },
+      '7-8': {
+        name: 'Hô hấp ở thực vật',
+        title: 'Khối 7 - Sinh Học: Hô hấp ở thực vật',
+        desc: 'Đo lường sự hấp thụ khí oxygen và giải phóng khí carbon dioxide của hạt nảy mầm.',
+        p1: { label: 'Khối lượng hạt nảy mầm (m)', min: 10, max: 500, step: 10, val: 100, unit: 'g' },
+        p2: { label: 'Nhiệt độ bình hô hấp (T)', min: 10, max: 45, step: 1, val: 28, unit: '°C' },
+        p3: { label: 'Thời gian theo dõi', min: 1, max: 24, step: 1, val: 4, unit: 'giờ' }
+      },
+      '7-9': {
+        name: 'Vận chuyển nước và thoát hơi nước ở lá',
+        title: 'Khối 7 - Sinh Học: Vận chuyển nước và thoát hơi nước ở lá',
+        desc: 'Khảo sát tốc độ dòng mạch gỗ và sự đóng mở của khí khổng dưới tác dụng độ ẩm.',
+        p1: { label: 'Độ ẩm không khí xung quanh', min: 20, max: 95, step: 5, val: 60, unit: '%' },
+        p2: { label: 'Nhiệt độ không khí (T)', min: 15, max: 40, step: 1, val: 30, unit: '°C' },
+        p3: { label: 'Tốc độ gió thổi qua lá', min: 0.0, max: 5.0, step: 0.2, val: 1.0, unit: 'm/s' }
+      },
+
+      // --- VẬT LÝ KHỐI 8 ---
+      '8-1': {
+        name: 'Xác định khối lượng riêng',
+        title: 'Khối 8 - Vật Lý: Xác định khối lượng riêng',
+        desc: 'Thực hành đo thể tích và khối lượng của các vật thể rắn để tính khối lượng riêng.',
+        p1: { label: 'Khối lượng vật (m)', min: 10, max: 2000, step: 10, val: 250, unit: 'g' },
+        p2: { label: 'Thể tích vật (V)', min: 5, max: 1000, step: 5, val: 100, unit: 'cm³' },
+        p3: { label: 'Nhiệt độ nước', min: 10, max: 90, step: 1, val: 25, unit: '°C' }
+      },
+      '8-2': {
+        name: 'Áp suất chất lỏng và lực đẩy Archimedes',
+        title: 'Khối 8 - Vật Lý: Áp suất chất lỏng và lực đẩy Archimedes',
+        desc: 'Khảo sát áp suất tác dụng trong lòng chất lỏng và lực đẩy Archimedes.',
+        p1: { label: 'Độ sâu nhúng chìm (h)', min: 1, max: 50, step: 1, val: 20, unit: 'cm' },
+        p2: { label: 'Thể tích phần chìm (V)', min: 10, max: 500, step: 10, val: 150, unit: 'cm³' },
+        p3: { label: 'Khối lượng riêng chất lỏng', min: 0.8, max: 2.0, step: 0.1, val: 1.0, unit: 'g/cm³' }
+      },
+      '8-3': {
+        name: 'Đo năng lượng nhiệt và đòn bẩy',
+        title: 'Khối 8 - Vật Lý: Đo năng lượng nhiệt và đòn bẩy',
+        desc: 'Nghiên cứu sự truyền nhiệt, tính nhiệt lượng và điều kiện cân bằng của đòn bẩy.',
+        p1: { label: 'Khối lượng nước thu nhiệt (m)', min: 50, max: 1000, step: 50, val: 300, unit: 'g' },
+        p2: { label: 'Độ tăng nhiệt độ (Δt)', min: 5, max: 80, step: 1, val: 30, unit: '°C' },
+        p3: { label: 'Chiều dài cánh tay đòn (l1)', min: 10, max: 100, step: 5, val: 40, unit: 'cm' }
+      },
+
+      // --- HÓA HỌC KHỐI 8 ---
+      '8-4': {
+        name: 'Định luật bảo toàn khối lượng và phản ứng hóa học',
+        title: 'Khối 8 - Hóa Học: Định luật bảo toàn khối lượng và phản ứng hóa học',
+        desc: 'Kiểm chứng tổng khối lượng các chất sản phẩm bằng tổng khối lượng các chất tham gia.',
+        p1: { label: 'Khối lượng chất A ban đầu', min: 5, max: 200, step: 5, val: 50, unit: 'g' },
+        p2: { label: 'Khối lượng chất B ban đầu', min: 5, max: 200, step: 5, val: 73, unit: 'g' },
+        p3: { label: 'Hiệu suất phản ứng', min: 10, max: 100, step: 5, val: 100, unit: '%' }
+      },
+      '8-5': {
+        name: 'Dung dịch và độ tan',
+        title: 'Khối 8 - Hóa Học: Dung dịch và độ tan',
+        desc: 'Khảo sát lượng chất rắn hòa tan tối đa trong nước ở các nhiệt độ khác nhau.',
+        p1: { label: 'Nhiệt độ dung dịch (T)', min: 10, max: 100, step: 5, val: 40, unit: '°C' },
+        p2: { label: 'Khối lượng chất tan cho vào', min: 1, max: 150, step: 2, val: 45, unit: 'g' },
+        p3: { label: 'Khối lượng dung môi (Nước)', min: 50, max: 500, step: 50, val: 100, unit: 'g' }
+      },
+      '8-6': {
+        name: 'Khảo sát tính chất Acid - Base và thang đo pH',
+        title: 'Khối 8 - Hóa Học: Khảo sát tính chất Acid - Base và thang đo pH',
+        desc: 'Nhận biết môi trường dung dịch qua chất chỉ thị màu và xác định giá trị pH.',
+        p1: { label: 'Nồng độ ion H+ / OH-', min: 0.001, max: 2.0, step: 0.01, val: 0.1, unit: 'mol/L' },
+        p2: { label: 'Giá trị pH định mức', min: 0, max: 14, step: 0.5, val: 7, unit: 'pH' },
+        p3: { label: 'Lượng chất chỉ thị màu', min: 1, max: 10, step: 1, val: 3, unit: 'giọt' }
+      },
+
+      // --- SINH HỌC KHỐI 8 ---
+      '8-7': {
+        name: 'Quan sát tế bào và mô cơ thể người',
+        title: 'Khối 8 - Sinh Học: Quan sát tế bào và mô cơ thể người',
+        desc: 'Quan sát cấu trúc biểu bì, tế bào máu và các loại mô chính dưới kính hiển vi.',
+        p1: { label: 'Độ phóng đại hiển vi', min: 100, max: 1200, step: 100, val: 400, unit: 'x' },
+        p2: { label: 'Nồng độ chất nhuộm sinh học', min: 0.1, max: 2.0, step: 0.1, val: 0.8, unit: '%' },
+        p3: { label: 'Độ sáng trường quan sát', min: 10, max: 100, step: 5, val: 60, unit: '%' }
+      },
+      '8-8': {
+        name: 'Thí nghiệm tiêu hóa và hô hấp ở người',
+        title: 'Khối 8 - Sinh Học: Thí nghiệm tiêu hóa và hô hấp ở người',
+        desc: 'Mô phỏng hoạt động của enzyme tiêu hóa và mô hình cơ hô hấp.',
+        p1: { label: 'Thể tích khí lưu thông (VT)', min: 200, max: 1500, step: 50, val: 500, unit: 'ml' },
+        p2: { label: 'Nồng độ enzyme tiêu hóa', min: 0.1, max: 5.0, step: 0.1, val: 1.0, unit: '%' },
+        p3: { label: 'Tần số nhịp thở', min: 10, max: 40, step: 1, val: 18, unit: 'lần/phút' }
+      },
+      '8-9': {
+        name: 'Quan sát hệ sinh thái',
+        title: 'Khối 8 - Sinh Học: Quan sát hệ sinh thái',
+        desc: 'Nghiên cứu mối quan hệ dinh dưỡng, chuỗi và lưới thức ăn trong hệ sinh thái mẫu.',
+        p1: { label: 'Mật độ sinh vật sản xuất', min: 10, max: 500, step: 10, val: 150, unit: 'cá thể' },
+        p2: { label: 'Số lượng bậc dinh dưỡng', min: 2, max: 5, step: 1, val: 3, unit: 'bậc' },
+        p3: { label: 'Năng lượng ánh sáng đầu vào', min: 100, max: 2000, step: 50, val: 1000, unit: 'kcal' }
+      },
+
+      // --- VẬT LÝ KHỐI 9 ---
+      '9-1': {
+        name: 'Hiện tượng khúc xạ ánh sáng',
+        title: 'Khối 9 - Vật Lý: Hiện tượng khúc xạ ánh sáng',
+        desc: 'Khảo sát sự đổi hướng của tia sáng khi truyền qua ranh giới giữa hai môi trường trong suốt.',
+        p1: { label: 'Góc tới (i)', min: 0, max: 85, step: 1, val: 45, unit: '°' },
+        p2: { label: 'Chiết suất môi trường 2 (n2)', min: 1.0, max: 2.5, step: 0.05, val: 1.33, unit: '' },
+        p3: { label: 'Cường độ nguồn sáng', min: 10, max: 100, step: 5, val: 80, unit: '%' }
+      },
+      '9-2': {
+        name: 'Đo tiêu cự thấu kính hội tụ',
+        title: 'Khối 9 - Vật Lý: Đo tiêu cự thấu kính hội tụ',
+        desc: 'Thực hành xác định tiêu cự của thấu kính hội tụ bằng phương pháp quang hình.',
+        p1: { label: 'Khoảng cách vật đến thấu kính (d)', min: 10, max: 100, step: 1, val: 30, unit: 'cm' },
+        p2: { label: 'Tiêu cự thấu kính (f)', min: 5, max: 30, step: 1, val: 15, unit: 'cm' },
+        p3: { label: 'Kích thước vật sáng', min: 1, max: 10, step: 0.5, val: 3, unit: 'cm' }
+      },
+      '9-3': {
+        name: 'Định luật Ohm và mạch điện',
+        title: 'Khối 9 - Vật Lý: Định luật Ohm và mạch điện',
+        desc: 'Khảo sát mối quan hệ giữa U, I và R trong đoạn mạch gồm các điện trở mắc nối tiếp/song song.',
+        p1: { label: 'Hiệu điện thế nguồn (U)', min: 1, max: 24, step: 0.5, val: 12, unit: 'V' },
+        p2: { label: 'Giá trị điện trở (R)', min: 5, max: 100, step: 5, val: 20, unit: 'Ω' },
+        p3: { label: 'Nhiệt độ dây dẫn', min: 20, max: 100, step: 5, val: 30, unit: '°C' }
+      },
+
+      // --- HÓA HỌC KHỐI 9 ---
+      '9-4': {
+        name: 'Tính chất hydrocarbon (Metan, Etilen)',
+        title: 'Khối 9 - Hóa Học: Tính chất hydrocarbon (Metan, Etilen)',
+        desc: 'Khảo sát tính chất cháy và phản ứng đặc trưng của hydrocarbon no và không no.',
+        p1: { label: 'Lưu lượng khí hydrocarbon', min: 0.5, max: 5.0, step: 0.5, val: 2.0, unit: 'lít/phút' },
+        p2: { label: 'Nồng độ dung dịch Bromine', min: 0.05, max: 1.0, step: 0.05, val: 0.2, unit: 'M' },
+        p3: { label: 'Cường độ nguồn nhiệt kích hoạt', min: 10, max: 100, step: 10, val: 50, unit: '%' }
+      },
+      '9-5': {
+        name: 'Tính chất của Ethanol và Acid acetic',
+        title: 'Khối 9 - Hóa Học: Tính chất của Ethanol và Acid acetic',
+        desc: 'Nghiên cứu tính chất hóa học đặc trưng của rượu ethyl alcohol và axit acetic.',
+        p1: { label: 'Nồng độ Ethanol / Acid acetic', min: 5, max: 98, step: 5, val: 40, unit: '%' },
+        p2: { label: 'Nhiệt độ dung dịch', min: 20, max: 90, step: 5, val: 30, unit: '°C' },
+        p3: { label: 'Lượng chất xúc tác', min: 0.1, max: 5.0, step: 0.1, val: 1.0, unit: 'g' }
+      },
+      '9-6': {
+        name: 'Glucid và Protein cơ bản',
+        title: 'Khối 9 - Hóa Học: Glucid và Protein cơ bản',
+        desc: 'Khảo sát phản ứng nhận biết tinh bột, đường glucose và protein qua các thuốc thử đặc trưng.',
+        p1: { label: 'Nồng độ dung dịch mẫu thử', min: 1, max: 20, step: 1, val: 5, unit: '%' },
+        p2: { label: 'Nhiệt độ đun nóng cách thủy', min: 20, max: 100, step: 5, val: 70, unit: '°C' },
+        p3: { label: 'Lượng thuốc thử cho vào', min: 1, max: 10, step: 1, val: 3, unit: 'ml' }
+      },
+
+      // --- SINH HỌC KHỐI 9 ---
+      '9-7': {
+        name: 'Thí nghiệm các quy luật di truyền',
+        title: 'Khối 9 - Sinh Học: Thí nghiệm các quy luật di truyền',
+        desc: 'Mô phỏng các phép lai và thống kê tỉ lệ phân li kiểu hình theo quy luật Mendel.',
+        p1: { label: 'Số lượng cá thể thống kê (N)', min: 100, max: 2000, step: 100, val: 500, unit: 'cá thể' },
+        p2: { label: 'Tỉ lệ sức sống giao tử', min: 0.5, max: 1.0, step: 0.05, val: 1.0, unit: '' },
+        p3: { label: 'Số thế hệ khảo sát', min: 1, max: 5, step: 1, val: 2, unit: 'thế hệ' }
+      },
+      '9-8': {
+        name: 'Mô hình cấu trúc không gian ADN',
+        title: 'Khối 9 - Sinh Học: Mô hình cấu trúc không gian ADN',
+        desc: 'Khảo sát cấu trúc xoắn kép, liên kết hydrogen và quá trình nhân đôi phân tử ADN.',
+        p1: { label: 'Số lượng cặp nucleotide (N)', min: 10, max: 500, step: 10, val: 100, unit: 'cặp' },
+        p2: { label: 'Tỉ lệ cặp G-C / A-T', min: 0.5, max: 2.0, step: 0.1, val: 1.2, unit: '' },
+        p3: { label: 'Tốc độ tổng hợp mạch mới', min: 1, max: 10, step: 1, val: 5, unit: 'x' }
+      },
+      '9-9': {
+        name: 'Di truyền học ứng dụng',
+        title: 'Khối 9 - Sinh Học: Di truyền học ứng dụng',
+        desc: 'Tìm hiểu các ứng dụng của di truyền học trong chọn giống cây trồng và vật nuôi.',
+        p1: { label: 'Tỷ lệ biến dị tổ hợp', min: 1, max: 50, step: 1, val: 10, unit: '%' },
+        p2: { label: 'Hiệu quả chọn giống', min: 10, max: 100, step: 5, val: 75, unit: '%' },
+        p3: { label: 'Quy mô quần thể khảo sát', min: 50, max: 1000, step: 50, val: 200, unit: 'cá thể' }
+      }
+    };
+
+    // Biến trạng thái toàn cục
+    let currentSubject = 'physics';
+    let isSimRunning = true;
+    let authMode = 'login'; // 'login' | 'register'
+
+   
+    // --- 3. LOGIC CHUYỂN TAB MÔN HỌC & ĐIỀU KHIỂN THÔNG SỐ ---
+    function getCurrentParams() {
+      return {
+        param1: parseFloat(document.getElementById('param1').value),
+        param2: parseFloat(document.getElementById('param2').value),
+        param3: parseFloat(document.getElementById('param3').value),
+        isRunning: isSimRunning
+      };
+    }
+
+   function selectSubject(subjectType, lessonId = '6-1') {
+      currentSubject = lessonId;
+      const cfg = SUBJECT_CONFIG[lessonId] || SUBJECT_CONFIG['6-1'];
+
+      // Cập nhật thông tin tiêu đề và mô tả trên giao diện
+      document.getElementById('subject-badge').textContent = cfg.name;
+      document.getElementById('canvas-title').textContent = cfg.title;
+      document.getElementById('experiment-desc').textContent = cfg.desc;
+
+      // Cập nhật 3 thanh trượt thông số theo cấu hình của bài học đã chọn
+      ['1', '2', '3'].forEach(idx => {
+        const pCfg = cfg[`p${idx}`];
+        const input = document.getElementById(`param${idx}`);
+        document.getElementById(`label-param${idx}`).textContent = pCfg.label;
+        document.getElementById(`unit-param${idx}`).textContent = pCfg.unit;
+        input.min = pCfg.min;
+        input.max = pCfg.max;
+        input.step = pCfg.step;
+        input.value = pCfg.val;
+        document.getElementById(`val-param${idx}`).textContent = pCfg.val;
+      });
+
+      onParamsChange();
+    }
+
+    function onParamsChange() {
+      const p = getCurrentParams();
+      document.getElementById('val-param1').textContent = p.param1;
+      document.getElementById('val-param2').textContent = p.param2;
+      document.getElementById('val-param3').textContent = p.param3;
+
+      const placeholderInfo = document.getElementById('placeholder-live-info');
+      if (placeholderInfo) {
+        placeholderInfo.textContent = `Môn: ${currentSubject} | P1: ${p.param1} | P2: ${p.param2} | P3: ${p.param3} | Chạy: ${p.isRunning}`;
+      }
+
+      render3DSimulation(currentSubject, p);
+    }
+
+    function toggleSimulation() {
+      isSimRunning = !isSimRunning;
+      const btn = document.getElementById('btn-toggle-sim');
+      const icon = document.getElementById('icon-toggle-sim');
+      const text = document.getElementById('text-toggle-sim');
+      const dot = document.getElementById('sim-status-dot');
+
+      if (isSimRunning) {
+        btn.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm bg-amber-600 hover:bg-amber-500 text-white shadow-lg shadow-amber-600/20 transition';
+        icon.className = 'fa-solid fa-pause';
+        text.textContent = 'Tạm dừng';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-emerald-400 animate-pulse';
+      } else {
+        btn.className = 'flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl font-semibold text-sm bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg shadow-emerald-600/20 transition';
+        icon.className = 'fa-solid fa-play';
+        text.textContent = 'Tiếp tục';
+        dot.className = 'w-2.5 h-2.5 rounded-full bg-amber-400';
+      }
+      onParamsChange();
+    }
+
+    function resetSimulation() {
+      isSimRunning = true;
+      document.getElementById('report-note').value = '';
+      switchSubject(currentSubject);
+    }
+
+   
+
+    // --- 5. HÀM CHỜ ĐỒ HỌA THREE.JS (BƯỚC 2) ---
+    function render3DSimulation(subject, params) {
+      // ================= BẮT ĐẦU ĐOẠN MÃ 3D (BƯỚC 2) =================
+      const container = document.getElementById('canvas-3d-container');
+      if (!container) return;
+
+      // Ẩn khung thông báo chờ (placeholder) khi Three.js khởi chạy
+      const placeholder = document.getElementById('canvas-placeholder');
+      if (placeholder) placeholder.style.display = 'none';
+
+      // 1. KHỞI TẠO HỆ THỐNG THREE.JS (CHỈ TẠO 1 LẦN DUY NHẤT)
+      if (!window._vlabs3D) {
+        const scene = new THREE.Scene();
+        scene.fog = new THREE.FogExp2(0x090d16, 0.035);
+
+        const camera = new THREE.PerspectiveCamera(
+          45,
+          container.clientWidth / container.clientHeight,
+          0.1,
+          100
+        );
+        camera.position.set(0, 2.5, 9.5);
+
+        const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+        renderer.setSize(container.clientWidth, container.clientHeight);
+        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        renderer.shadowMap.enabled = true;
+        renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+        container.appendChild(renderer.domElement);
+
+        // Điều khiển xoay, phóng to, thu nhỏ bằng chuột
+        const controls = new THREE.OrbitControls(camera, renderer.domElement);
+        controls.enableDamping = true;
+        controls.dampingFactor = 0.06;
+        controls.maxDistance = 22;
+        controls.minDistance = 3;
+        controls.target.set(0, 0.5, 0);
+
+        // Hệ thống ánh sáng & đổ bóng phòng thí nghiệm
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.55);
+        scene.add(ambientLight);
+
+        const dirLight = new THREE.DirectionalLight(0xffffff, 1.1);
+        dirLight.position.set(6, 10, 7);
+        dirLight.castShadow = true;
+        dirLight.shadow.mapSize.width = 1024;
+        dirLight.shadow.mapSize.height = 1024;
+        dirLight.shadow.camera.near = 0.5;
+        dirLight.shadow.camera.far = 25;
+        scene.add(dirLight);
+
+        const pointLight = new THREE.PointLight(0x38bdf8, 1.2, 18);
+        pointLight.position.set(-5, 4, 4);
+        scene.add(pointLight);
+
+        // Mặt bàn thí nghiệm & Lưới tọa độ 3D
+        const floorGeo = new THREE.CylinderGeometry(7, 7.5, 0.3, 64);
+        const floorMat = new THREE.MeshStandardMaterial({
+          color: 0x0f172a,
+          roughness: 0.4,
+          metalness: 0.3
+        });
+        const floor = new THREE.Mesh(floorGeo, floorMat);
+        floor.position.y = -2.65;
+        floor.receiveShadow = true;
+        scene.add(floor);
+
+        const grid = new THREE.GridHelper(12, 24, 0x38bdf8, 0x1e293b);
+        grid.position.y = -2.49;
+        grid.material.opacity = 0.25;
+        grid.material.transparent = true;
+        scene.add(grid);
+
+        // Nhóm chứa mô hình của từng môn học
+        const subjectGroup = new THREE.Group();
+        scene.add(subjectGroup);
+
+        window._vlabs3D = {
+          scene,
+          camera,
+          renderer,
+          controls,
+          pointLight,
+          subjectGroup,
+          activeSubject: null,
+          params: { ...params },
+          clock: new THREE.Clock(),
+          simData: {}
+        };
+
+        // Tự động co giãn khung hình 3D khi thay đổi kích thước cửa sổ
+        window.addEventListener('resize', () => {
+          if (!container.clientWidth || !container.clientHeight) return;
+          camera.aspect = container.clientWidth / container.clientHeight;
+          camera.updateProjectionMatrix();
+          renderer.setSize(container.clientWidth, container.clientHeight);
+        });
+
+        // VÒNG LẶP HOẠT ẢNH (ANIMATION LOOP)
+        const animate = () => {
+          requestAnimationFrame(animate);
+          const st = window._vlabs3D;
+          const dt = Math.min(st.clock.getDelta(), 0.1);
+          const p = st.params;
+
+          st.controls.update();
+
+          if (p && p.isRunning) {
+            const speed = p.param3 || 1.0;
+
+            // --- CẬP NHẬT CHUYỂN ĐỘNG MÔN VẬT LÝ ---
+            if (st.activeSubject === 'physics' && st.simData.physics) {
+              const phys = st.simData.physics;
+              const L_m = Math.max(0.2, p.param1 / 25); // Quy đổi chiều dài dây
+              const g = Math.max(1, p.param2);          // Gia tốc trọng trường
+              const omega = Math.sqrt(g / L_m);
+
+              phys.phase += dt * speed * omega;
+              const maxAngle = 0.52; // Biên độ góc (~30 độ)
+              const theta = maxAngle * Math.sin(phys.phase);
+
+              // Cập nhật chiều dài dây và góc lắc con lắc đơn
+              phys.stringMesh.scale.y = L_m;
+              phys.stringMesh.position.y = -L_m / 2;
+              phys.bobMesh.position.y = -L_m;
+              phys.pivotGroup.rotation.z = theta;
+
+              // Cập nhật con lắc lò xo dao động điều hòa song song
+              const springStretch = 1 + 0.32 * Math.cos(phys.phase * 1.15);
+              phys.springCoil.scale.y = springStretch;
+              phys.springWeight.position.y = 2.6 - 1.5 * springStretch;
+            }
+
+            // --- CẬP NHẬT CHUYỂN ĐỘNG MÔN HÓA HỌC ---
+            if (st.activeSubject === 'chemistry' && st.simData.chemistry) {
+              const chem = st.simData.chemistry;
+              const conc = p.param1; // Nồng độ CM (0.1 -> 5.0)
+              const temp = p.param2; // Nhiệt độ T (20 -> 100)
+              const reactRate = (conc * 0.35 + (temp - 20) / 40) * speed;
+
+              // Tiến trình đổi màu dung dịch (Xanh CuSO4 -> Lục nhạt FeSO4) và bám đồng lên thanh kim loại
+              chem.progress = Math.min(1, chem.progress + dt * 0.04 * reactRate);
+              const startColor = new THREE.Color(0x0284c7);
+              const endColor = new THREE.Color(0x10b981);
+              chem.liquidMat.color.lerpColors(startColor, endColor, chem.progress);
+
+              const metalStart = new THREE.Color(0x94a3b8);
+              const metalCoated = new THREE.Color(0xd97706); // Màu đồng đỏ bám vào
+              chem.coatedMat.color.lerpColors(metalStart, metalCoated, chem.progress);
+
+              // Sóng sánh mặt thoáng dung dịch
+              chem.waveTime += dt * speed * 3;
+              chem.liquidTop.position.y = 0.48 + Math.sin(chem.waveTime) * 0.015;
+
+              // Hiệu ứng hạt bọt khí H2 bay lên từ thanh kim loại
+              const activeBubbles = Math.min(
+                chem.bubbles.length,
+                Math.floor(8 + conc * 10 + (temp - 20) * 0.25)
+              );
+              chem.bubbles.forEach((b, idx) => {
+                b.mesh.visible = idx < activeBubbles;
+                if (!b.mesh.visible) return;
+
+                b.mesh.position.y += dt * b.speed * Math.max(0.4, reactRate * 0.7);
+                b.mesh.position.x = b.baseX + Math.sin(chem.waveTime * 2 + b.offset) * 0.06;
+
+                if (b.mesh.position.y > 0.45) {
+                  b.mesh.position.y = -1.35 + Math.random() * 0.3;
+                }
+              });
+            }
+
+            // --- CẬP NHẬT CHUYỂN ĐỘNG MÔN SINH HỌC ---
+            if (st.activeSubject === 'biology' && st.simData.biology) {
+              const bio = st.simData.biology;
+              bio.dnaGroup.rotation.y += dt * speed * 0.85;
+              bio.pulseTime += dt * 2.5;
+
+              // Hiệu ứng phát sáng sinh học và trôi nổi bào quan
+              bio.particles.rotation.y -= dt * 0.15 * speed;
+              bio.particles.position.y = Math.sin(bio.pulseTime * 0.5) * 0.12;
+            }
+          }
+
+          // Cập nhật các thông số tĩnh ngay cả khi đang tạm dừng
+          if (st.activeSubject === 'physics' && st.simData.physics) {
+            const L_m = Math.max(0.2, st.params.param1 / 25);
+            st.simData.physics.stringMesh.scale.y = L_m;
+            st.simData.physics.stringMesh.position.y = -L_m / 2;
+            st.simData.physics.bobMesh.position.y = -L_m;
+          }
+
+          if (st.activeSubject === 'chemistry' && st.simData.chemistry) {
+            const tempRatio = (st.params.param2 - 20) / 80; // 0 -> 1
+            st.simData.chemistry.burnerMat.emissiveIntensity = 0.2 + tempRatio * 1.8;
+          }
+
+          st.renderer.render(st.scene, st.camera);
+        };
+        animate();
+      }
+
+      // 2. CẬP NHẬT THÔNG SỐ MỚI NHẤT TỪ THANH TRƯỢT
+      const st = window._vlabs3D;
+      const prevParams = st.params || {};
+      st.params = { ...params };
+
+      // Hàm dọn dẹp bộ nhớ 3D khi đổi môn học
+      function clearSubjectGroup() {
+        while (st.subjectGroup.children.length > 0) {
+          const obj = st.subjectGroup.children[0];
+          st.subjectGroup.remove(obj);
+        }
+      }
+
+      // 3. XÂY DỰNG MÔ HÌNH 3D KHI CHUYỂN MÔN HOẶC ĐỔI CẤU TRÚC ADN
+      const needRebuildBiology =
+        subject === 'biology' &&
+        st.activeSubject === 'biology' &&
+        (Math.round(prevParams.param1) !== Math.round(params.param1) ||
+          prevParams.param2 !== params.param2);
+
+      if (st.activeSubject !== subject || needRebuildBiology) {
+        clearSubjectGroup();
+        st.activeSubject = subject;
+
+        // ==================== MÔ HÌNH 1: VẬT LÝ ====================
+        if (subject === 'physics') {
+          st.pointLight.color.setHex(0x38bdf8);
+          const group = new THREE.Group();
+
+          const metalMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            metalness: 0.8,
+            roughness: 0.25
+          });
+
+          // Trụ đỡ đứng & Thanh ngang
+          const pole = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.16, 5.4, 24), metalMat);
+          pole.position.set(-2.2, 0.2, 0);
+          pole.castShadow = true;
+          group.add(pole);
+
+          const topBar = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 4.2, 24), metalMat);
+          topBar.rotation.z = Math.PI / 2;
+          topBar.position.set(-0.3, 2.75, 0);
+          topBar.castShadow = true;
+          group.add(topBar);
+
+          // 1A. Con lắc đơn (Simple Pendulum)
+          const pivotGroup = new THREE.Group();
+          pivotGroup.position.set(-0.4, 2.75, 0);
+          group.add(pivotGroup);
+
+          const pivotJoint = new THREE.Mesh(
+            new THREE.SphereGeometry(0.16, 20, 20),
+            new THREE.MeshStandardMaterial({ color: 0x38bdf8, emissive: 0x0284c7, emissiveIntensity: 0.4 })
+          );
+          pivotGroup.add(pivotJoint);
+
+          const stringGeo = new THREE.CylinderGeometry(0.025, 0.025, 1, 12);
+          const stringMat = new THREE.MeshStandardMaterial({ color: 0xe2e8f0 });
+          const stringMesh = new THREE.Mesh(stringGeo, stringMat);
+          pivotGroup.add(stringMesh);
+
+          const bobGeo = new THREE.SphereGeometry(0.38, 32, 32);
+          const bobMat = new THREE.MeshStandardMaterial({
+            color: 0xf59e0b,
+            metalness: 0.65,
+            roughness: 0.15,
+            emissive: 0xb45309,
+            emissiveIntensity: 0.2
+          });
+          const bobMesh = new THREE.Mesh(bobGeo, bobMat);
+          bobMesh.castShadow = true;
+          pivotGroup.add(bobMesh);
+
+          // 1B. Con lắc lò xo (Harmonic Spring Oscillator) bên cạnh
+          const springCoil = new THREE.Group();
+          springCoil.position.set(1.3, 2.7, 0);
+          const ringMat = new THREE.MeshStandardMaterial({ color: 0x38bdf8, metalness: 0.7, roughness: 0.2 });
+          for (let i = 0; i < 12; i++) {
+            const ring = new THREE.Mesh(new THREE.TorusGeometry(0.22, 0.035, 12, 24), ringMat);
+            ring.rotation.x = Math.PI / 2.2;
+            ring.position.y = -i * 0.12;
+            springCoil.add(ring);
+          }
+          group.add(springCoil);
+
+          const springWeight = new THREE.Mesh(
+            new THREE.CylinderGeometry(0.32, 0.32, 0.5, 24),
+            new THREE.MeshStandardMaterial({ color: 0xec4899, metalness: 0.5, roughness: 0.2 })
+          );
+          springWeight.position.set(1.3, 1.0, 0);
+          springWeight.castShadow = true;
+          group.add(springWeight);
+
+          st.subjectGroup.add(group);
+          st.simData.physics = { pivotGroup, stringMesh, bobMesh, springCoil, springWeight, phase: 0 };
+        }
+
+        // ==================== MÔ HÌNH 2: HÓA HỌC ====================
+        if (subject === 'chemistry') {
+          st.pointLight.color.setHex(0x10b981);
+          const group = new THREE.Group();
+
+          // Đế đèn nhiệt (Bunsen/Heater Base) phát sáng theo nhiệt độ
+          const burnerMat = new THREE.MeshStandardMaterial({
+            color: 0xf97316,
+            emissive: 0xea580c,
+            emissiveIntensity: 0.5,
+            roughness: 0.3
+          });
+          const burner = new THREE.Mesh(new THREE.TorusGeometry(1.15, 0.12, 16, 48), burnerMat);
+          burner.rotation.x = Math.PI / 2;
+          burner.position.y = -2.25;
+          group.add(burner);
+
+          // Cốc thủy tinh 3D (Beaker)
+          const glassMat = new THREE.MeshPhongMaterial({
+            color: 0xe0f2fe,
+            transparent: true,
+            opacity: 0.25,
+            shininess: 120,
+            side: THREE.DoubleSide
+          });
+          const beakerWall = new THREE.Mesh(new THREE.CylinderGeometry(1.45, 1.35, 3.6, 40, 1, true), glassMat);
+          beakerWall.position.y = -0.35;
+          group.add(beakerWall);
+
+          const beakerBottom = new THREE.Mesh(new THREE.CylinderGeometry(1.35, 1.35, 0.1, 40), glassMat);
+          beakerBottom.position.y = -2.1;
+          group.add(beakerBottom);
+
+          const beakerLip = new THREE.Mesh(new THREE.TorusGeometry(1.45, 0.05, 16, 48), glassMat);
+          beakerLip.rotation.x = Math.PI / 2;
+          beakerLip.position.y = 1.45;
+          group.add(beakerLip);
+
+          // Dung dịch hóa chất bên trong cốc
+          const liquidMat = new THREE.MeshPhongMaterial({
+            color: 0x0284c7,
+            transparent: true,
+            opacity: 0.78,
+            shininess: 90
+          });
+          const liquidBody = new THREE.Mesh(new THREE.CylinderGeometry(1.38, 1.3, 2.5, 36), liquidMat);
+          liquidBody.position.y = -0.8;
+          group.add(liquidBody);
+
+          const liquidTop = new THREE.Mesh(
+            new THREE.CylinderGeometry(1.38, 1.38, 0.05, 36),
+            new THREE.MeshPhongMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.85 })
+          );
+          liquidTop.position.y = 0.48;
+          group.add(liquidTop);
+
+          // Thanh kim loại (Kẽm / Sắt) nhúng vào dung dịch
+          const upperMetalMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            metalness: 0.85,
+            roughness: 0.2
+          });
+          const coatedMat = new THREE.MeshStandardMaterial({
+            color: 0x94a3b8,
+            metalness: 0.7,
+            roughness: 0.35
+          });
+
+          const metalUpper = new THREE.Mesh(new THREE.BoxGeometry(0.32, 1.8, 0.18), upperMetalMat);
+          metalUpper.position.set(0.25, 1.3, 0);
+          metalUpper.rotation.z = 0.18;
+          group.add(metalUpper);
+
+          const metalSubmerged = new THREE.Mesh(new THREE.BoxGeometry(0.34, 1.9, 0.2), coatedMat);
+          metalSubmerged.position.set(-0.08, -0.45, 0);
+          metalSubmerged.rotation.z = 0.18;
+          group.add(metalSubmerged);
+
+          // Hệ thống hạt bọt khí 3D (Bubbles)
+          const bubbles = [];
+          const bubbleGeo = new THREE.SphereGeometry(0.06, 12, 12);
+          const bubbleMat = new THREE.MeshPhongMaterial({
+            color: 0xffffff,
+            transparent: true,
+            opacity: 0.75,
+            shininess: 100
+          });
+
+          for (let i = 0; i < 65; i++) {
+            const bMesh = new THREE.Mesh(bubbleGeo, bubbleMat);
+            const scale = 0.5 + Math.random() * 1.1;
+            bMesh.scale.set(scale, scale, scale);
+            const baseX = (Math.random() - 0.5) * 1.6;
+            const baseZ = (Math.random() - 0.5) * 1.6;
+            bMesh.position.set(baseX, -1.8 + Math.random() * 2.2, baseZ);
+            group.add(bMesh);
+
+            bubbles.push({
+              mesh: bMesh,
+              baseX,
+              speed: 0.6 + Math.random() * 0.9,
+              offset: Math.random() * Math.PI * 2
+            });
+          }
+
+          st.subjectGroup.add(group);
+          st.simData.chemistry = {
+            liquidMat,
+            liquidTop,
+            coatedMat,
+            burnerMat,
+            bubbles,
+            progress: 0,
+            waveTime: 0
+          };
+        }
+
+        // ==================== MÔ HÌNH 3: SINH HỌC ====================
+        if (subject === 'biology') {
+          st.pointLight.color.setHex(0xa855f7);
+          const dnaGroup = new THREE.Group();
+
+          const numPairs = Math.round(params.param1 || 16); // Số cặp Nu
+          const unzipFactor = params.param2 || 4.0;         // Độ giãn xoắn & tách mạch
+          const totalHeight = 5.4;
+          const stepY = totalHeight / numPairs;
+
+          // Bảng màu phát sáng cho 4 loại Nucleotide (A, T, G, C)
+          const baseColors = [0x38bdf8, 0xf43f5e, 0x10b981, 0xf59e0b];
+          const backboneMat1 = new THREE.MeshStandardMaterial({
+            color: 0x60a5fa,
+            emissive: 0x1d4ed8,
+            emissiveIntensity: 0.45,
+            roughness: 0.2
+          });
+          const backboneMat2 = new THREE.MeshStandardMaterial({
+            color: 0xc084fc,
+            emissive: 0x7e22ce,
+            emissiveIntensity: 0.45,
+            roughness: 0.2
+          });
+
+          const prevPos1 = new THREE.Vector3();
+          const prevPos2 = new THREE.Vector3();
+
+          for (let i = 0; i < numPairs; i++) {
+            const ratio = i / Math.max(1, numPairs - 1);
+            const y = -totalHeight / 2 + i * stepY + 0.3;
+
+            // Góc xoắn kép
+            const twistRate = 0.55 - (unzipFactor - 4.0) * 0.025;
+            const angle = i * twistRate;
+
+            // Hiệu ứng TÁCH MẠCH ADN khi thanh trượt số 2 (param2) > 4.0
+            const unzipAmount = Math.max(0, (unzipFactor - 4.0) * 0.28) * Math.pow(ratio, 1.4);
+            const radius = 1.15 + unzipAmount;
+
+            const x1 = Math.cos(angle) * radius;
+            const z1 = Math.sin(angle) * radius;
+            const x2 = -Math.cos(angle) * radius;
+            const z2 = -Math.sin(angle) * radius;
+
+            // Khung đường - photphat 2 mạch
+            const sphereGeo = new THREE.SphereGeometry(0.16, 16, 16);
+            const node1 = new THREE.Mesh(sphereGeo, backboneMat1);
+            node1.position.set(x1, y, z1);
+            dnaGroup.add(node1);
+
+            const node2 = new THREE.Mesh(sphereGeo, backboneMat2);
+            node2.position.set(x2, y, z2);
+            dnaGroup.add(node2);
+
+            // Ống nối dọc theo xương sống ADN
+            if (i > 0) {
+              const link1Geo = new THREE.CylinderGeometry(0.05, 0.05, node1.position.distanceTo(prevPos1), 8);
+              const link1 = new THREE.Mesh(link1Geo, backboneMat1);
+              link1.position.copy(node1.position).add(prevPos1).multiplyScalar(0.5);
+              link1.lookAt(prevPos1);
+              link1.rotateX(Math.PI / 2);
+              dnaGroup.add(link1);
+
+              const link2Geo = new THREE.CylinderGeometry(0.05, 0.05, node2.position.distanceTo(prevPos2), 8);
+              const link2 = new THREE.Mesh(link2Geo, backboneMat2);
+              link2.position.copy(node2.position).add(prevPos2).multiplyScalar(0.5);
+              link2.lookAt(prevPos2);
+              link2.rotateX(Math.PI / 2);
+              dnaGroup.add(link2);
+            }
+            prevPos1.copy(node1.position);
+            prevPos2.copy(node2.position);
+
+            // Cặp Bazơ nitơ hướng vào tâm (A-T / G-C)
+            const cIdx = i % 2 === 0 ? 0 : 2;
+            const matA = new THREE.MeshStandardMaterial({
+              color: baseColors[cIdx],
+              emissive: baseColors[cIdx],
+              emissiveIntensity: 0.4
+            });
+            const matB = new THREE.MeshStandardMaterial({
+              color: baseColors[cIdx + 1],
+              emissive: baseColors[cIdx + 1],
+              emissiveIntensity: 0.4
+            });
+
+            const halfLen = 0.5;
+            const baseGeo = new THREE.CylinderGeometry(0.065, 0.065, halfLen, 12);
+
+            const dir1 = new THREE.Vector3(-Math.cos(angle), 0, -Math.sin(angle)).normalize();
+            const base1 = new THREE.Mesh(baseGeo, matA);
+            base1.position.copy(node1.position).addScaledVector(dir1, halfLen / 2);
+            base1.lookAt(node2.position);
+            base1.rotateX(Math.PI / 2);
+            dnaGroup.add(base1);
+
+            const base2 = new THREE.Mesh(baseGeo, matB);
+            base2.position.copy(node2.position).addScaledVector(dir1, -halfLen / 2);
+            base2.lookAt(node1.position);
+            base2.rotateX(Math.PI / 2);
+            dnaGroup.add(base2);
+
+            // Liên kết Hydro ở giữa (Tự đứt ra khi tách mạch lớn)
+            if (unzipAmount < 0.25) {
+              const hBondGeo = new THREE.CylinderGeometry(0.025, 0.025, radius * 2 - halfLen * 2, 8);
+              const hBondMat = new THREE.MeshBasicMaterial({
+                color: 0xe2e8f0,
+                transparent: true,
+                opacity: Math.max(0.15, 0.7 - unzipAmount * 2)
+              });
+              const hBond = new THREE.Mesh(hBondGeo, hBondMat);
+              hBond.position.set(0, y, 0);
+              hBond.lookAt(node1.position);
+              hBond.rotateX(Math.PI / 2);
+              dnaGroup.add(hBond);
+            }
+          }
+
+          // Các hạt phân tử nội bào trôi nổi xung quanh
+          const particles = new THREE.Group();
+          const pGeo = new THREE.SphereGeometry(0.05, 8, 8);
+          const pMat = new THREE.MeshBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.5 });
+          for (let j = 0; j < 40; j++) {
+            const dot = new THREE.Mesh(pGeo, pMat);
+            dot.position.set(
+              (Math.random() - 0.5) * 8,
+              (Math.random() - 0.5) * 6,
+              (Math.random() - 0.5) * 6
+            );
+            particles.add(dot);
+          }
+
+          st.subjectGroup.add(dnaGroup);
+          st.subjectGroup.add(particles);
+          st.simData.biology = { dnaGroup, particles, pulseTime: 0 };
+        }
+      }
+      // ================= KẾT THÚC ĐOẠN MÃ 3D (BƯỚC 2) =================
+    }
+// --- 6. LOGIC TÌM KIẾM THÍ NGHIỆM THÔNG MINH ---
+   const EXPERIMENT_DATABASE = [
+      // Khối 6
+      { id: 'physics', name: 'Đo chiều dài - khối lượng - thời gian', subject: 'Vật Lý (Khối 6)', desc: 'Thực hành đo đạc đại lượng vật lý cơ bản.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Biến dạng lò xo (Định luật Hooke)', subject: 'Vật Lý (Khối 6)', desc: 'Khảo sát sự dãn của lò xo treo vật nặng.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Lực ma sát', subject: 'Vật Lý (Khối 6)', desc: 'Nghiên cứu lực ma sát trượt và ma sát nghỉ.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'chemistry', name: 'Sự chuyển thể của chất', subject: 'Hóa Học (Khối 6)', desc: 'Chuyển đổi giữa thể rắn, lỏng, khí.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Oxygen và không khí', subject: 'Hóa Học (Khối 6)', desc: 'Tính chất và tỉ lệ thành phần không khí.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Tách chất bằng phương pháp lọc & cô cạn', subject: 'Hóa Học (Khối 6)', desc: 'Tách hỗn hợp chất rắn và lỏng.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'biology', name: 'Sử dụng kính lúp & kính hiển vi quang học', subject: 'Sinh Học (Khối 6)', desc: 'Làm quen thiết bị quang học phòng lab.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Tế bào thực vật và động vật', subject: 'Sinh Học (Khối 6)', desc: 'Quan sát cấu trúc tế bào dưới kính hiển vi.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Quan sát vi khuẩn (làm sữa chua)', subject: 'Sinh Học (Khối 6)', desc: 'Ứng dụng vi sinh vật lên men thực phẩm.', icon: 'fa-dna', color: 'text-purple-400' },
+
+      // Khối 7
+      { id: 'physics', name: 'Đo tốc độ chuyển động', subject: 'Vật Lý (Khối 7)', desc: 'Tính quãng đường và thời gian chuyển động.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Tần số và độ cao của âm', subject: 'Vật Lý (Khối 7)', desc: 'Khảo sát sóng âm và dao động.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Sự phản xạ ánh sáng', subject: 'Vật Lý (Khối 7)', desc: 'Định luật phản xạ ánh sáng qua gương phẳng.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'chemistry', name: 'Xây dựng mô hình nguyên tử', subject: 'Hóa Học (Khối 7)', desc: 'Cấu tạo hạt nhân và lớp vỏ electron.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Bảng tuần hoàn các nguyên tố hóa học', subject: 'Hóa Học (Khối 7)', desc: 'Quy luật sắp xếp nhóm và chu kỳ.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Tốc độ phản ứng hóa học cơ bản', subject: 'Hóa Học (Khối 7)', desc: 'Ảnh hưởng của nhiệt độ và nồng độ.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'biology', name: 'Quang hợp ở cây xanh', subject: 'Sinh Học (Khối 7)', desc: 'Thí nghiệm thoát bọt khí oxygen.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Hô hấp ở thực vật', subject: 'Sinh Học (Khối 7)', desc: 'Sự hấp thụ O2 và thải CO2 ở cây.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Vận chuyển nước & thoát hơi nước ở lá', subject: 'Sinh Học (Khối 7)', desc: 'Vai trò của mạch gỗ và khí khổng.', icon: 'fa-dna', color: 'text-purple-400' },
+
+      // Khối 8
+      { id: 'physics', name: 'Xác định khối lượng riêng', subject: 'Vật Lý (Khối 8)', desc: 'Tính toán trọng lượng và thể tích vật thể.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Áp suất chất lỏng & lực đẩy Archimedes', subject: 'Vật Lý (Khối 8)', desc: 'Sự nổi và áp suất thủy tĩnh.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Năng lượng nhiệt và đòn bẩy', subject: 'Vật Lý (Khối 8)', desc: 'Truyền nhiệt và cân bằng lực.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'chemistry', name: 'Định luật bảo toàn khối lượng', subject: 'Hóa Học (Khối 8)', desc: 'Bảo toàn số lượng nguyên tử trước và sau phản ứng.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Dung dịch và độ tan', subject: 'Hóa Học (Khối 8)', desc: 'Khảo sát dung dịch bão hòa và chưa bão hòa.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Tính chất Acid, Base và thang đo pH', subject: 'Hóa Học (Khối 8)', desc: 'Phản ứng trung hòa và nhận biết dung dịch.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'biology', name: 'Quan sát tế bào và mô cơ thể người', subject: 'Sinh Học (Khối 8)', desc: 'Cấu trúc biểu bì và tế bào máu.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Tiêu hóa và hô hấp ở người', subject: 'Sinh Học (Khối 8)', desc: 'Mô hình hoạt động của phổi và enzym.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Quan sát hệ sinh thái', subject: 'Sinh Học (Khối 8)', desc: 'Mối quan hệ sinh vật và môi trường.', icon: 'fa-dna', color: 'text-purple-400' },
+
+      // Khối 9
+      { id: 'physics', name: 'Hiện tượng khúc xạ ánh sáng', subject: 'Vật Lý (Khối 9)', desc: 'Sự đổi hướng tia sáng qua mặt phân cách.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Đo tiêu cự thấu kính hội tụ', subject: 'Vật Lý (Khối 9)', desc: 'Xác định tiêu cự ảnh thật qua thấu kính.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'physics', name: 'Định luật Ohm và mạch điện', subject: 'Vật Lý (Khối 9)', desc: 'Khảo sát mối quan hệ U, I, R.', icon: 'fa-bolt', color: 'text-sky-400' },
+      { id: 'chemistry', name: 'Hydrocarbon (Metan, Etilen)', subject: 'Hóa Học (Khối 9)', desc: 'Tính chất hóa học hợp chất hữu cơ mạch carbon.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Ethanol và Acid acetic', subject: 'Hóa Học (Khối 9)', desc: 'Nhóm chức rượu và axit hữu cơ.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'chemistry', name: 'Glucid và Protein cơ bản', subject: 'Hóa Học (Khối 9)', desc: 'Hợp chất hữu cơ thiết yếu trong đời sống.', icon: 'fa-flask-vial', color: 'text-emerald-400' },
+      { id: 'biology', name: 'Thí nghiệm các quy luật di truyền', subject: 'Sinh Học (Khối 9)', desc: 'Lai giống và xác suất di truyền Mendel.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Mô hình cấu trúc không gian ADN', subject: 'Sinh Học (Khối 9)', desc: 'Xoắn kép, bổ sung nucleotide 3D.', icon: 'fa-dna', color: 'text-purple-400' },
+      { id: 'biology', name: 'Di truyền học và ứng dụng', subject: 'Sinh Học (Khối 9)', desc: 'Công nghệ tế bào và ADN tái tổ hợp.', icon: 'fa-dna', color: 'text-purple-400' }
+    ];
+
+    function handleExperimentSearch(keyword) {
+      const query = keyword.toLowerCase().trim();
+      const dropdown = document.getElementById('search-dropdown');
+      const listEl = document.getElementById('search-results-list');
+      const noResultEl = document.getElementById('search-no-result');
+      const clearBtn = document.getElementById('clear-search-btn');
+
+      if (query.length > 0) {
+        clearBtn.classList.remove('hidden');
+      } else {
+        clearBtn.classList.add('hidden');
+        dropdown.classList.add('hidden');
+        return;
+      }
+
+      const matches = EXPERIMENT_DATABASE.filter(item => 
+        item.name.toLowerCase().includes(query) || 
+        item.subject.toLowerCase().includes(query) || 
+        item.desc.toLowerCase().includes(query)
+      );
+
+      dropdown.classList.remove('hidden');
+      if (matches.length > 0) {
+        noResultEl.classList.add('hidden');
+        listEl.innerHTML = matches.map(m => `
+          <div onclick="selectSearchResult('${m.id}')" class="flex items-center gap-2.5 p-2 rounded-lg hover:bg-slate-800 cursor-pointer transition">
+            <div class="w-7 h-7 rounded-lg bg-slate-800 flex items-center justify-center ${m.color}">
+              <i class="fa-solid ${m.icon} text-xs"></i>
+            </div>
+            <div>
+              <div class="text-xs font-bold text-slate-200">${m.name} <span class="text-[10px] text-sky-400 font-normal">(${m.subject})</span></div>
+              <div class="text-[10px] text-slate-400 truncate max-w-[180px]">${m.desc}</div>
+            </div>
+          </div>
+        `).join('');
+      } else {
+        listEl.innerHTML = '';
+        noResultEl.classList.remove('hidden');
+      }
+    }
+
+    function selectSearchResult(subjectKey) {
+      switchSubject(subjectKey);
+      document.getElementById('experiment-search-input').value = '';
+      document.getElementById('search-dropdown').classList.add('hidden');
+      document.getElementById('clear-search-btn').classList.add('hidden');
+    }
+
+    function clearExperimentSearch() {
+      document.getElementById('experiment-search-input').value = '';
+      document.getElementById('search-dropdown').classList.add('hidden');
+      document.getElementById('clear-search-btn').classList.add('hidden');
+    }
+
+    // Đóng dropdown khi click ra ngoài
+    window.addEventListener('click', (e) => {
+      const searchInput = document.getElementById('experiment-search-input');
+      const dropdown = document.getElementById('search-dropdown');
+      if (searchInput && dropdown && !searchInput.contains(e.target) && !dropdown.contains(e.target)) {
+        dropdown.classList.add('hidden');
+      }
+    });
+    // Khởi chạy ứng dụng khi tải trang
+    window.addEventListener('DOMContentLoaded', () => {
+      updateAuthUI();
+      selectSubject('physics', '6-1');
+    });
+	
+	// Cơ chế bấm click mở/tắt menu và tự động đóng khi bấm ra ngoài
+    function toggleMenuDropdown(e) {
+      e.stopPropagation();
+      const box = document.getElementById('menu-dropdown-box');
+      if (box) {
+        box.classList.toggle('hidden');
+      }
+    }
+
+    window.addEventListener('click', () => {
+      const box = document.getElementById('menu-dropdown-box');
+      if (box && !box.classList.contains('hidden')) {
+        box.classList.add('hidden');
+      }
+    });
+	// --- 7. HÀM HIỂN THỊ POPUP / TOAST THÔNG BÁO XP & CẤP BẬC ---
+    function showXPToast(msg, isLevelUp = false) {
+      const container = document.getElementById('xp-toast-container');
+      if (!container) return;
+
+      const toast = document.createElement('div');
+      toast.className = `pointer-events-auto flex items-center gap-3 px-4 py-3 rounded-2xl border shadow-2xl backdrop-blur-md transition-all duration-300 transform translate-y-4 opacity-0 ${
+        isLevelUp
+          ? 'bg-gradient-to-r from-indigo-900/95 to-purple-900/95 border-purple-400/50 text-white shadow-purple-500/20'
+          : 'bg-slate-900/95 border-sky-500/40 text-slate-100 shadow-sky-500/10'
+      }`;
+
+      toast.innerHTML = `
+        <div class="w-9 h-9 rounded-xl flex items-center justify-center text-lg shrink-0 ${
+          isLevelUp ? 'bg-purple-500/30 text-amber-300 animate-bounce' : 'bg-sky-500/20 text-sky-400'
+        }">
+          <i class="fa-solid ${isLevelUp ? 'fa-trophy' : 'fa-bolt'}"></i>
+        </div>
+        <div class="text-xs font-semibold leading-snug pr-2">
+          ${msg}
+        </div>
+      `;
+
+      container.appendChild(toast);
+
+      // Hiệu ứng trượt lên
+      requestAnimationFrame(() => {
+        toast.classList.remove('translate-y-4', 'opacity-0');
+        toast.classList.add('translate-y-0', 'opacity-100');
+      });
+
+      // Tự động ẩn sau 4 giây
+      setTimeout(() => {
+        toast.classList.remove('translate-y-0', 'opacity-100');
+        toast.classList.add('translate-y-2', 'opacity-0');
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+  <!-- ================= MODAL DIỄN ĐÀN V-LABS ================= -->
+  <div id="forum-modal" class="fixed inset-0 bg-slate-950/90 backdrop-blur-md z-[60] hidden flex-col">
+    <!-- Header Diễn đàn -->
+    <div class="flex items-center justify-between p-4 border-b border-slate-800 bg-slate-900/80">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-teal-600 flex items-center justify-center shadow-lg">
+          <i class="fa-solid fa-users text-white text-xl"></i>
+        </div>
+        <div>
+          <h2 class="text-lg font-bold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-teal-400">Cộng đồng V-LABS</h2>
+          <p class="text-xs text-slate-400">Trao đổi, thảo luận và chia sẻ kết quả thí nghiệm</p>
+        </div>
+      </div>
+      <button onclick="closeForum()" class="w-8 h-8 flex items-center justify-center rounded-lg bg-slate-800 text-slate-400 hover:text-white hover:bg-rose-500/80 transition">
+        <i class="fa-solid fa-xmark text-lg"></i>
+      </button>
+    </div>
+
+    <!-- Nội dung Diễn đàn -->
+    <div class="flex-1 overflow-hidden flex flex-col lg:flex-row max-w-7xl w-full mx-auto p-4 gap-4">
+      <!-- CỘT TRÁI: ĐĂNG BÀI -->
+      <div class="w-full lg:w-1/3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col h-fit shadow-xl">
+        <h3 class="text-sm font-bold text-slate-200 mb-3"><i class="fa-solid fa-pen-to-square mr-2 text-sky-400"></i>Tạo bài đăng mới</h3>
+        <textarea id="post-content" rows="4" placeholder="Bạn muốn chia sẻ kinh nghiệm hay kết quả thí nghiệm gì?" class="w-full p-3 rounded-xl bg-slate-800 border border-slate-700 text-sm text-slate-200 focus:border-emerald-500 focus:outline-none mb-3 resize-none"></textarea>
+        
+        <!-- Khung upload -->
+        <div class="border-2 border-dashed border-slate-700 rounded-xl p-4 text-center hover:border-emerald-500/50 transition relative mb-3">
+          <input type="file" id="post-media" accept="video/*, image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="previewMediaName()">
+          <div id="media-preview-text" class="text-xs text-slate-400 pointer-events-none">
+            <i class="fa-solid fa-cloud-arrow-up text-xl text-slate-500 block mb-1"></i> Bấm để tải lên Ảnh / Video
+          </div>
+        </div>
+
+        <div id="upload-progress-container" class="hidden w-full bg-slate-800 rounded-full h-1.5 mb-3">
+          <div id="upload-progress-bar" class="bg-emerald-500 h-1.5 rounded-full" style="width: 0%"></div>
+        </div>
+
+        <button onclick="submitPost()" id="btn-submit-post" class="w-full py-2.5 rounded-xl font-bold text-sm bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-white shadow-lg transition">Đăng bài</button>
+      </div>
+
+      <!-- CỘT PHẢI: BẢNG TIN -->
+      <div class="w-full lg:w-2/3 bg-slate-900 border border-slate-800 rounded-2xl p-4 flex flex-col shadow-xl overflow-hidden">
+        <h3 class="text-sm font-bold text-slate-200 mb-3 border-b border-slate-800 pb-2"><i class="fa-solid fa-fire mr-2 text-orange-400"></i>Bài đăng mới nhất</h3>
+        <div id="forum-feed" class="flex-1 overflow-y-auto space-y-4 pr-2">
+          <div class="flex items-center justify-center h-full text-slate-500 text-sm"><i class="fa-solid fa-circle-notch fa-spin mr-2"></i> Đang tải dữ liệu...</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Nhúng file logic diễn đàn -->
+  <script src="forum-service.js"></script>
+  <!-- ===== KẾT NỐI CÁC FILE ĐÃ TÁCH ===== -->
+  <script src="firebase-service.js"></script>
+  <script src="experiments-grade6.js"></script>
+  <script src="experiments-grade7.js"></script>
+  <script src="experiments-grade8.js"></script>
+  <script src="experiments-grade9.js"></script>
+  <title>V-LABS - Phòng thí nghiệm ảo 3D Khoa học Tự nhiên</title>
+<meta name="description" content="Nền tảng phòng thí nghiệm ảo 3D môn Khoa học Tự nhiên dành cho học sinh cấp 2, hỗ trợ mô phỏng mô hình và thảo luận cộng đồng." />
+<meta name="google-site-verification" content="WBz7BfnyR2Jd0nUJKGRH8PNOcWCYTT-TEDZSXUFrueg" />
+</body>
+</html>
