@@ -4,6 +4,12 @@
  *    9-1 : Hiện tượng khúc xạ ánh sáng
  *    9-2 : Đo tiêu cự thấu kính hội tụ
  *    9-3 : Định luật Ohm và mạch điện (có Khóa K đóng/mở)
+ *    9-4 : Tính chất hydrocarbon (Metan, Etilen)
+ *    9-5 : Tính chất của Ethanol và Acid acetic
+ *    9-6 : Glucid và Protein cơ bản
+ *    9-7 : Thí nghiệm các quy luật di truyền
+ *    9-8 : Mô hình cấu trúc không gian ADN
+ *    9-9 : Di truyền học ứng dụng
  *  API công khai:
  *    window.renderGrade9(expId, expGroup, expState)
  *    window.updateGrade9(expId, expState, p1, p2, p3)
@@ -1234,30 +1240,1163 @@
   }
 
   /* ===================================================================
+   *  TIỆN ÍCH CHO NHÓM HÓA - SINH
+   * =================================================================== */
+  let _dmObj = null;
+  function dmo() { return _dmObj || (_dmObj = new THREE.Object3D()); }
+
+  /** Ghi ma trận cho một instance (vị trí, tỉ lệ 3 trục, xoay quanh trục x) */
+  function setInst(mesh, i, x, y, z, sx, sy, sz, rx) {
+    const d = dmo();
+    d.position.set(x, y, z);
+    d.rotation.set(rx || 0, 0, 0);
+    d.scale.set(sx, sy, sz);
+    d.updateMatrix();
+    mesh.setMatrixAt(i, d.matrix);
+  }
+  function makeInst(geo, mat, n) {
+    const m = new THREE.InstancedMesh(geo, mat, n);
+    m.frustumCulled = false;
+    return m;
+  }
+  function hash01(i, salt) {
+    let h = (Math.imul(i | 0, 374761393) + Math.imul(salt | 0, 668265263)) | 0;
+    h = Math.imul(h ^ (h >>> 13), 1274126177);
+    h ^= h >>> 16;
+    return (h >>> 0) / 4294967296;
+  }
+  function makeRng(seed) {
+    let a = seed >>> 0;
+    return function () {
+      a = (a + 0x6D2B79F5) >>> 0;
+      let t = a;
+      t = Math.imul(t ^ (t >>> 15), t | 1);
+      t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
+      return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+    };
+  }
+  function gauss(rng) {
+    const u = Math.max(rng(), 1e-9), v = rng();
+    return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * PI * v);
+  }
+  function segCyl(group, ax, ay, bx, by, r, mat, z) {
+    const dx = bx - ax, dy = by - ay;
+    const len = Math.sqrt(dx * dx + dy * dy);
+    if (len < 1e-6) return null;
+    const m = cyl(r, r, len, 12, mat, (ax + bx) / 2, (ay + by) / 2, z || 0);
+    m.rotation.z = Math.atan2(dy, dx) - PI / 2;
+    group.add(m);
+    return m;
+  }
+  function labelTag(group, text, color, w, x, y, z) {
+    const l = createText3D(text, color, w);
+    l.position.set(x, y, z === undefined ? 0.6 : z);
+    group.add(l);
+    return l;
+  }
+  /** Ống nghiệm thủy tinh đáy tròn: thành + đáy bán cầu + miệng */
+  function addTube(group, x, yBottom, r, h, mat) {
+    group.add(mk(new THREE.CylinderGeometry(r, r, h - r, 32, 1, true), mat, x, yBottom + r + (h - r) / 2, 0));
+    group.add(mk(new THREE.SphereGeometry(r, 32, 16, 0, PI * 2, PI / 2, PI / 2), mat, x, yBottom + r, 0));
+    const rim = mk(new THREE.TorusGeometry(r, 0.04, 8, 32), mat, x, yBottom + h, 0);
+    rim.rotation.x = PI / 2;
+    group.add(rim);
+  }
+  /** Khối chất lỏng trong ống nghiệm (thân trụ + đáy bán cầu dùng chung vật liệu) */
+  function makeLiquid(group, x, yBottom, r, mat) {
+    const ri = r - 0.05;
+    const L = { x: x, yBase: yBottom + r, ri: ri };
+    L.bowl = mk(new THREE.SphereGeometry(ri, 28, 14, 0, PI * 2, PI / 2, PI / 2), mat, x, yBottom + r, 0);
+    L.col = mk(new THREE.CylinderGeometry(1, 1, 1, 28), mat, x, yBottom + r, 0);
+    L.col.scale.set(ri, 0.001, ri);
+    group.add(L.bowl);
+    group.add(L.col);
+    L.level = function (h) {
+      h = Math.max(h, 0.001);
+      L.col.scale.set(ri, h, ri);
+      L.col.position.y = L.yBase + h / 2;
+    };
+    return L;
+  }
+  function liquidMat(color, opacity) {
+    return new THREE.MeshPhysicalMaterial({
+      color: color, transparent: true, opacity: opacity, roughness: 0.05, metalness: 0,
+      clearcoat: 1, clearcoatRoughness: 0.05, depthWrite: false
+    });
+  }
+  function makeFlame(group, x, y) {
+    const f = new THREE.Group();
+    f.position.set(x, y, 0);
+    f.add(mk(new THREE.CylinderGeometry(0, 0.2, 1, 16), new THREE.MeshBasicMaterial({
+      color: 0xff9a1f, transparent: true, opacity: 0.8, blending: THREE.AdditiveBlending, depthWrite: false
+    }), 0, 0.5, 0));
+    f.add(mk(new THREE.CylinderGeometry(0, 0.11, 0.6, 12), new THREE.MeshBasicMaterial({
+      color: 0x4aa3ff, transparent: true, opacity: 0.85, blending: THREE.AdditiveBlending, depthWrite: false
+    }), 0, 0.3, 0));
+    group.add(f);
+    return f;
+  }
+  function addLedStack(group, g, x, ys, w, cols, titleText, titleY) {
+    g.leds = [];
+    group.add(box(w + 0.4, (ys[0] - ys[ys.length - 1]) + 1.9, 0.12, stdMat(0x121820, 0.5, 0.5), x, (ys[0] + ys[ys.length - 1]) / 2 + 0.2, -0.12));
+    for (let i = 0; i < ys.length; i++) {
+      const m = createText3D('...', cols[i], w);
+      m.position.set(x, ys[i], 0.03);
+      group.add(m);
+      g.leds.push(m);
+    }
+    if (titleText) {
+      g.title = createText3D(titleText, '#ffffff', w);
+      g.title.position.set(x, titleY, 0.03);
+      group.add(g.title);
+    }
+  }
+  function addTable(group, w, cx) {
+    group.add(box(w, 0.3, 4.6, stdMat(0x2f3946, 0.35, 0.65), cx, -0.15, 0));
+    group.add(box(w - 0.5, 0.05, 4.1, stdMat(0x1c232c, 0.2, 0.8), cx, 0.01, 0));
+  }
+
+  /* ===================================================================
+   *  BÀI 9-4 : TÍNH CHẤT HYDROCARBON (nội bộ: HYDRO)
+   *  Khí etilen sục vào dung dịch Br2 -> mất màu nâu đỏ
+   * =================================================================== */
+  function buildHydro(group, st) {
+    const g = { id: 'HYDRO', t: 0, prog: 0, conc: null, pct: -1, rate: 0.05, flow: 2, heat: 0.5, nBub: 20 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    const steel = stdMat(0xc9d1da, 0.7, 0.28);
+    const darkSteel = stdMat(0x39424f, 0.75, 0.35);
+    addTable(group, 16, 2.2);
+
+    // ----- bình khí hydrocarbon -----
+    const gasMat = stdMat(0x2e7d32, 0.5, 0.35);
+    group.add(cyl(0.85, 0.85, 3.3, 40, gasMat, -4.6, 1.65, 0));
+    group.add(cyl(0.3, 0.85, 0.45, 40, gasMat, -4.6, 3.52, 0));
+    group.add(cyl(0.2, 0.2, 0.4, 16, steel, -4.6, 3.95, 0));
+    const wheel = mk(new THREE.TorusGeometry(0.25, 0.04, 8, 24), stdMat(0xd32f2f, 0.4, 0.4), -4.6, 4.25, 0);
+    wheel.rotation.x = PI / 2;
+    group.add(wheel);
+    group.add(cyl(0.86, 0.86, 0.7, 40, stdMat(0xfff59d, 0.2, 0.6), -4.6, 1.0, 0));
+    labelTag(group, 'C2H4 (Etilen)', '#b9f6ca', 1.7, -4.6, 2.3, 0.9);
+
+    // ----- ống dẫn khí thủy tinh -----
+    const pipeMat = glassMat(0xcfe8ff, 0.4);
+    const P = [[-4.6, 4.4], [-4.6, 5.9], [0.4, 5.9], [0.4, 2.9]];
+    for (let i = 0; i < P.length - 1; i++) segCyl(group, P[i][0], P[i][1], P[i + 1][0], P[i + 1][1], 0.08, pipeMat, 0);
+    g.seg = [];
+    g.pathLen = 0;
+    for (let i = 0; i < P.length - 1; i++) {
+      const len = Math.hypot(P[i + 1][0] - P[i][0], P[i + 1][1] - P[i][1]);
+      g.seg.push({ a: P[i], b: P[i + 1], len: len, start: g.pathLen });
+      g.pathLen += len;
+    }
+    // đồng hồ lưu lượng
+    const gcase = cyl(0.36, 0.36, 0.14, 32, darkSteel, -3.7, 5.2, 0.4);
+    gcase.rotation.x = PI / 2;
+    group.add(gcase);
+    const gdisc = mk(new THREE.CircleGeometry(0.31, 32), new THREE.MeshBasicMaterial({ color: 0xf6f3e8 }), -3.7, 5.2, 0.48);
+    group.add(gdisc);
+    g.needle = new THREE.Group();
+    g.needle.position.set(-3.7, 5.2, 0.5);
+    g.needle.add(box(0.02, 0.27, 0.01, new THREE.MeshBasicMaterial({ color: 0xd50000 }), 0, 0.13, 0));
+    group.add(g.needle);
+
+    // ----- ống nghiệm chứa dung dịch Br2 -----
+    const TX = 0.4, TB = 1.9, TR = 0.8, TH = 3.4;
+    addTube(group, TX, TB, TR, TH, glassMat(0xdff1ff, 0.22));
+    g.liqMat = liquidMat(0xb5470f, 0.85);
+    g.liq = makeLiquid(group, TX, TB, TR, g.liqMat);
+    g.liq.level(1.4);
+    g.surfY = TB + TR + 1.4;
+    g.outY = 2.9;
+    g.prodMat = liquidMat(0xe9e2b8, 0.0);
+    g.prod = mk(new THREE.CylinderGeometry(1, 1, 1, 24), g.prodMat, TX, TB + 0.3, 0);
+    g.prod.scale.set(TR - 0.1, 0.001, TR - 0.1);
+    group.add(g.prod);
+    group.add(cyl(0.7, 0.62, 0.45, 24, stdMat(0x5d4037, 0.1, 0.8), TX, TB + TH + 0.2, 0));
+
+    // bọt khí sủi trong dung dịch + hạt khí chạy trong ống
+    g.bub = makeInst(new THREE.SphereGeometry(0.07, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.55, depthWrite: false }), 48);
+    group.add(g.bub);
+    g.dots = makeInst(new THREE.SphereGeometry(0.05, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0x9be7a0, toneMapped: false }), 22);
+    group.add(g.dots);
+
+    // ----- giá đỡ + đèn cồn (nguồn nhiệt kích hoạt) -----
+    group.add(cyl(0.07, 0.07, 5.8, 16, steel, 2.7, 2.9, 0));
+    group.add(box(1.6, 0.2, 1.2, darkSteel, 2.7, 0.1, 0));
+    group.add(box(1.55, 0.1, 0.18, darkSteel, 1.95, 4.6, 0));
+    const jaw = mk(new THREE.TorusGeometry(TR + 0.05, 0.05, 8, 32), darkSteel, TX, 4.6, 0);
+    jaw.rotation.x = PI / 2;
+    group.add(jaw);
+    const lampGlass = mk(new THREE.SphereGeometry(0.62, 28, 18), glassMat(0xffe0b2, 0.5), TX, 0.58, 0);
+    lampGlass.scale.y = 0.85;
+    group.add(lampGlass);
+    group.add(cyl(0.18, 0.28, 0.3, 16, steel, TX, 1.03, 0));
+    group.add(cyl(0.04, 0.04, 0.2, 8, stdMat(0x5d4037, 0, 0.9), TX, 1.28, 0));
+    g.flame = makeFlame(group, TX, 1.3);
+    g.flameLight = new THREE.PointLight(0xff9a3c, 0.5, 6, 2);
+    g.flameLight.position.set(TX, 1.7, 1.2);
+    group.add(g.flameLight);
+    labelTag(group, 'Dung dịch Br2', '#ffab91', 1.9, 0.4, 5.25 + 0.0, 0.9);
+    labelTag(group, 'Đèn cồn', '#ffe082', 1.2, 0.4, 0.0 - 0.45, 0.9);
+
+    addLedStack(group, g, 7.6, [4.1, 2.95, 1.8], 5.6, ['#ff8a65', '#ffd54f', '#69f0ae'], 'TÍNH CHẤT HYDROCARBON', 5.35);
+    return g;
+  }
+
+  function applyHydro(g) {
+    const depth = (0.25 + 0.75 * clamp(g.conc, 0, 1)) * (1 - g.prog);
+    g.liqMat.color.setHex(0xe3f4ff).lerp(new THREE.Color(0xb5470f), clamp(depth * 1.25, 0, 1));
+    g.liqMat.opacity = 0.18 + 0.72 * depth;
+    g.prodMat.opacity = 0.55 * g.prog;
+    g.prod.scale.y = Math.max(0.001, 0.22 * g.prog);
+    g.prod.position.y = 1.9 + 0.3 + g.prod.scale.y / 2;
+    const pct = Math.round(g.prog * 100);
+    if (pct !== g.pct) {
+      g.pct = pct;
+      if (g.prog < 0.03) updateText3D(g.leds[1], 'Trạng thái dung dịch: Chưa phản ứng (nâu đỏ)', '#ff8a65');
+      else if (g.prog < 0.97) updateText3D(g.leds[1], 'Trạng thái dung dịch: Mất màu ' + pct + '%', '#ffd54f');
+      else updateText3D(g.leds[1], 'Trạng thái dung dịch: Đổi màu hoàn toàn (trong suốt)', '#69f0ae');
+    }
+  }
+
+  function updateHydro(st, flow, conc, heatPct) {
+    const g = st.g9;
+    if (!g || g.id !== 'HYDRO') return;
+    flow = clamp(num(flow, 2), 0.5, 5);
+    conc = clamp(num(conc, 0.2), 0.05, 1);
+    heatPct = clamp(num(heatPct, 50), 10, 100);
+    const heat = heatPct / 100;
+    if (g.conc === null || Math.abs(conc - g.conc) > 1e-9) g.prog = 0;   // dung dịch Br2 mới -> làm lại
+    g.flow = flow; g.conc = conc; g.heat = heat;
+    // tốc độ mất màu: tăng theo lưu lượng khí và nhiệt, giảm theo lượng Br2 cần phản ứng
+    const eff = 0.3 + 0.7 * heat;
+    g.rate = flow * eff / (conc * 78);
+    g.nBub = Math.round(8 + flow * 8);
+    const hf = 0.25 + 0.4 * heat;
+    g.flame.scale.set(1, hf, 1);
+    g.flameLight.intensity = 0.3 + 1.4 * heat;
+    g.needle.rotation.z = 1.05 - 2.1 * (flow - 0.5) / 4.5;
+    updateText3D(g.leds[0], 'Lưu lượng khí: ' + fmt(flow, 1) + ' lít/phút | Nồng độ Br2: ' + fmt(conc, 2) + ' M');
+    updateText3D(g.leds[2], 'Nguồn nhiệt: ' + fmt(heatPct, 0) + '% | C2H4 + Br2 → C2H4Br2 (mất màu)');
+    g.pct = -1;
+    applyHydro(g);
+    g.last = { flow: flow, conc: conc, heat: heatPct, rate: g.rate, prog: g.prog };
+  }
+
+  function animateHydro(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'HYDRO' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    g.t += dt;
+    const t = g.t;
+    if (g.prog < 1) {
+      g.prog = Math.min(1, g.prog + g.rate * dt);
+      applyHydro(g);
+      g.last.prog = g.prog;
+    }
+    // bọt khí sủi
+    const spd = 0.35 + g.flow * 0.25;
+    for (let i = 0; i < 48; i++) {
+      if (i < g.nBub) {
+        const ph = (t * spd + i / g.nBub) % 1;
+        const y = g.outY + ph * (g.surfY - g.outY);
+        const x = 0.4 + Math.sin(t * 3 + i * 1.3) * 0.22 * ph;
+        const s = 0.7 + 0.6 * ((i * 37) % 10) / 10;
+        setInst(g.bub, i, x, y, 0.08 * Math.sin(i), s, s, s, 0);
+      } else setInst(g.bub, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.bub.instanceMatrix.needsUpdate = true;
+    // hạt khí chạy trong ống dẫn
+    const sp2 = 0.5 + g.flow * 0.7;
+    const L = g.pathLen;
+    for (let i = 0; i < 22; i++) {
+      pathPoint(g, (i * L / 22 + t * sp2) % L, _tmp);
+      setInst(g.dots, i, _tmp.x, _tmp.y, 0, 1, 1, 1, 0);
+    }
+    g.dots.instanceMatrix.needsUpdate = true;
+    // ngọn lửa nhấp nháy
+    const hf = 0.25 + 0.4 * g.heat;
+    g.flame.scale.set(1 + 0.05 * Math.sin(t * 21), hf * (1 + 0.1 * Math.sin(t * 17)), 1);
+  }
+
+  /* ===================================================================
+   *  BÀI 9-5 : ETHANOL VÀ ACID ACETIC (nội bộ: ESTER)
+   * =================================================================== */
+  function buildEster(group, st) {
+    const g = { id: 'ESTER', t: 0, yield: 0, cap: 0, score: 0, pct: -1, T: 30, nVap: 0 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    const steel = stdMat(0xc9d1da, 0.7, 0.28);
+    const darkSteel = stdMat(0x39424f, 0.75, 0.35);
+    addTable(group, 14, 3.5);
+
+    // bếp điện + cốc nước (đun cách thủy)
+    group.add(box(4.4, 0.5, 3.2, stdMat(0x2b3038, 0.5, 0.5), 0, 0.25, 0));
+    g.plateMat = stdMat(0x552200, 0.3, 0.5, { emissive: 0xff4400, emissiveIntensity: 0 });
+    const ring = mk(new THREE.TorusGeometry(1.3, 0.08, 10, 40), g.plateMat, 0, 0.52, 0);
+    ring.rotation.x = PI / 2;
+    group.add(ring);
+    const knob = cyl(0.18, 0.18, 0.2, 16, steel, 1.7, 0.25, 1.65);
+    knob.rotation.x = PI / 2;
+    group.add(knob);
+    group.add(mk(new THREE.CylinderGeometry(1.9, 1.9, 2.4, 48, 1, true), glassMat(0xd6efff, 0.2), 0, 1.7, 0));
+    group.add(mk(new THREE.CylinderGeometry(1.9, 1.9, 0.1, 48), glassMat(0xd6efff, 0.4), 0, 0.55, 0));
+    group.add(mk(new THREE.CylinderGeometry(1.84, 1.84, 1.9, 48), liquidMat(0x6ec6ff, 0.45), 0, 1.5, 0));
+    g.bathBub = makeInst(new THREE.SphereGeometry(0.06, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false }), 28);
+    group.add(g.bathBub);
+
+    // ống nghiệm phản ứng (rượu + axit + xúc tác) và lớp este nổi
+    const TB = 0.85, TR = 0.6, TH = 3.3;
+    addTube(group, 0, TB, TR, TH, glassMat(0xdff1ff, 0.22));
+    g.mixMat = liquidMat(0xe8f4ff, 0.4);
+    g.mix = makeLiquid(group, 0, TB, TR, g.mixMat);
+    g.mix.level(1.5);
+    g.surfY = TB + TR + 1.5;
+    g.esterMat = liquidMat(0xffe082, 0.8);
+    g.ester = mk(new THREE.CylinderGeometry(1, 1, 1, 28), g.esterMat, 0, g.surfY, 0);
+    g.ester.scale.set(TR - 0.05, 0.001, TR - 0.05);
+    group.add(g.ester);
+    group.add(cyl(0.55, 0.5, 0.45, 24, stdMat(0x5d4037, 0.1, 0.8), 0, TB + TH + 0.2, 0));
+
+    // ống sinh hàn: ống trong + áo nước làm lạnh
+    group.add(mk(new THREE.CylinderGeometry(0.2, 0.2, 2.1, 20, 1, true), glassMat(0xdff1ff, 0.3), 0, 5.3, 0));
+    group.add(mk(new THREE.CylinderGeometry(0.5, 0.5, 1.4, 28, 1, true), glassMat(0x4fc3f7, 0.3), 0, 5.4, 0));
+    group.add(cyl(0.5, 0.5, 0.08, 28, steel, 0, 4.7, 0));
+    group.add(cyl(0.5, 0.5, 0.08, 28, steel, 0, 6.1, 0));
+    const n1 = cyl(0.07, 0.07, 0.6, 10, glassMat(0x4fc3f7, 0.5), 0.78, 4.9, 0);
+    n1.rotation.z = PI / 2;
+    const n2 = cyl(0.07, 0.07, 0.6, 10, glassMat(0x4fc3f7, 0.5), -0.78, 5.9, 0);
+    n2.rotation.z = PI / 2;
+    group.add(n1);
+    group.add(n2);
+
+    // hơi este bay lên, ngưng tụ rồi nhỏ giọt về
+    g.vap = makeInst(new THREE.SphereGeometry(0.055, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xfff3b0, transparent: true, opacity: 0.85, toneMapped: false, depthWrite: false }), 30);
+    g.drop = makeInst(new THREE.SphereGeometry(0.05, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0x9fd8ff, transparent: true, opacity: 0.9, depthWrite: false }), 18);
+    g.aroma = makeInst(new THREE.SphereGeometry(0.08, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffc1e3, transparent: true, opacity: 0.45, blending: THREE.AdditiveBlending, depthWrite: false }), 14);
+    group.add(g.vap);
+    group.add(g.drop);
+    group.add(g.aroma);
+
+    // nhiệt kế trong cốc nước
+    group.add(mk(new THREE.CylinderGeometry(0.055, 0.055, 3.0, 12, 1, true), glassMat(0xffffff, 0.35), 1.3, 2.3, 0.6));
+    g.merc = cyl(0.03, 0.03, 1, 8, new THREE.MeshBasicMaterial({ color: 0xff1744 }), 1.3, 1.0, 0.6);
+    group.add(g.merc);
+
+    // giá đỡ
+    group.add(cyl(0.07, 0.07, 6.6, 16, steel, 2.9, 3.3, 0));
+    group.add(box(1.6, 0.2, 1.2, darkSteel, 2.9, 0.1, 0));
+    group.add(box(2.4, 0.1, 0.18, darkSteel, 1.7, 5.4, 0));
+    labelTag(group, 'Ống sinh hàn', '#81d4fa', 1.9, -1.9, 5.5, 0.9);
+    labelTag(group, 'Cách thủy', '#81d4fa', 1.5, -2.6, 1.3, 0.9);
+    labelTag(group, 'Lớp este nổi', '#ffe082', 1.9, -1.9, 3.4, 0.9);
+
+    addLedStack(group, g, 7.2, [4.2, 3.05, 1.9], 5.8, ['#00e5ff', '#ffd54f', '#69f0ae'], 'ETHANOL VÀ ACID ACETIC', 5.45);
+    return g;
+  }
+
+  function applyEster(g) {
+    const th = clamp(g.yield * 1.2, 0, 0.85);
+    g.ester.scale.y = Math.max(0.001, th);
+    g.ester.position.y = g.surfY + th / 2;
+    const pct = Math.round(g.yield * 100);
+    if (pct !== g.pct) {
+      g.pct = pct;
+      updateText3D(g.leds[2], 'CH3COOH + C2H5OH ↔ CH3COOC2H5 + H2O | Hiệu suất: ' + pct + '%');
+    }
+  }
+
+  function updateEster(st, conc, T, cat) {
+    const g = st.g9;
+    if (!g || g.id !== 'ESTER') return;
+    conc = clamp(num(conc, 40), 5, 98);
+    T = clamp(num(T, 30), 20, 90);
+    cat = clamp(num(cat, 1), 0.1, 5);
+    const Cn = conc / 98;
+    let Tf = clamp((T - 20) / 55, 0, 1);
+    if (T > 80) Tf *= 1 - 0.5 * (T - 80) / 10;           // quá nóng: rượu/axit bay hơi hao hụt
+    const Cat = 0.3 + 0.7 * clamp(cat / 3, 0, 1);
+    const score = Math.pow(Cn, 0.8) * Tf * Cat;
+    g.score = score;
+    g.cap = 0.67 * Cn;                                    // hiệu suất cân bằng ~67%
+    g.T = T;
+    g.nVap = Math.round(clamp(score, 0, 1) * 30);
+    let label, col;
+    if (score < 0.25) { label = 'Chậm'; col = '#ff8a65'; }
+    else if (score < 0.55) { label = 'Nhanh'; col = '#ffd54f'; }
+    else { label = 'Tối ưu'; col = '#69f0ae'; }
+    updateText3D(g.leds[0], 'Nồng độ: ' + fmt(conc, 0) + '% | Nhiệt độ: ' + fmt(T, 0) + '°C | Xúc tác: ' + fmt(cat, 1) + 'g');
+    updateText3D(g.leds[1], 'Tốc độ tạo Este: ' + label, col);
+    // bếp nóng đỏ + nhiệt kế
+    g.plateMat.emissiveIntensity = clamp((T - 20) / 70, 0, 1) * 1.6;
+    const mh = Math.max(0.02, (T - 20) / 70 * 2.4);
+    g.merc.scale.y = mh;
+    g.merc.position.y = 0.95 + mh / 2;
+    if (g.yield > g.cap) g.yield = g.cap;
+    g.pct = -1;
+    applyEster(g);
+    g.last = { conc: conc, T: T, cat: cat, score: score, label: label, yield: g.yield };
+  }
+
+  function animateEster(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'ESTER' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    g.t += dt;
+    const t = g.t;
+    if (g.yield < g.cap) {
+      g.yield = Math.min(g.cap, g.yield + dt * (0.004 + 0.1 * g.score));
+      applyEster(g);
+      g.last.yield = g.yield;
+    }
+    // bọt trong cốc nước nóng
+    const nb = Math.round(clamp((g.T - 55) / 35, 0, 1) * 28);
+    for (let i = 0; i < 28; i++) {
+      if (i < nb) {
+        const ph = (t * 0.6 + i * 0.137) % 1;
+        const a = i * 2.4;
+        setInst(g.bathBub, i, Math.cos(a) * 1.55 * (0.5 + 0.5 * ((i * 7) % 5) / 5), 0.7 + ph * 1.7, Math.sin(a) * 1.0, 1, 1, 1, 0);
+      } else setInst(g.bathBub, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.bathBub.instanceMatrix.needsUpdate = true;
+    // hơi este bay lên trong ống sinh hàn
+    const ys = g.surfY + clamp(g.yield * 1.2, 0, 0.85);
+    const yTop = 5.9;
+    for (let i = 0; i < 30; i++) {
+      if (i < g.nVap) {
+        const ph = (t * (0.25 + 0.5 * g.score) + i / 30) % 1;
+        setInst(g.vap, i, Math.sin(t * 4 + i) * 0.1 * ph, ys + 0.2 + ph * (yTop - ys - 0.2), 0, 1, 1, 1, 0);
+      } else setInst(g.vap, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.vap.instanceMatrix.needsUpdate = true;
+    // giọt ngưng tụ chảy về
+    const nd = Math.round(g.nVap * 0.6);
+    for (let i = 0; i < 18; i++) {
+      if (i < nd) {
+        const ph = (t * (0.3 + 0.4 * g.score) + i / 18) % 1;
+        setInst(g.drop, i, 0.13 * (i % 2 ? 1 : -1), 5.6 - ph * (5.6 - ys - 0.1), 0, 1, 1, 1, 0);
+      } else setInst(g.drop, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.drop.instanceMatrix.needsUpdate = true;
+    // mùi thơm thoát ra ở đầu ống sinh hàn
+    const na = Math.round(clamp(g.yield / 0.67, 0, 1) * 14);
+    for (let i = 0; i < 14; i++) {
+      if (i < na) {
+        const ph = (t * 0.35 + i / 14) % 1;
+        const s = 0.6 + ph;
+        setInst(g.aroma, i, Math.sin(t * 2 + i * 1.7) * 0.35 * ph, 6.2 + ph * 1.0, 0.1, s, s, s, 0);
+      } else setInst(g.aroma, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.aroma.instanceMatrix.needsUpdate = true;
+  }
+
+  /* ===================================================================
+   *  BÀI 9-6 : GLUCID VÀ PROTEIN CƠ BẢN (nội bộ: GLUC)
+   *  Tinh bột + Iot | Glucose + Fehling | Protein + Biuret
+   * =================================================================== */
+  function buildGluc(group, st) {
+    const g = { id: 'GLUC', t: 0 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    const steel = stdMat(0xc9d1da, 0.7, 0.28);
+    const darkSteel = stdMat(0x39424f, 0.75, 0.35);
+    addTable(group, 15, 2.2);
+
+    // bếp + cốc nước nóng (đun cách thủy)
+    group.add(box(7.4, 0.5, 3.4, stdMat(0x2b3038, 0.5, 0.5), 0, 0.25, 0));
+    g.plateMat = stdMat(0x552200, 0.3, 0.5, { emissive: 0xff4400, emissiveIntensity: 0 });
+    const ring = mk(new THREE.TorusGeometry(3.0, 0.08, 10, 48), g.plateMat, 0, 0.52, 0);
+    ring.rotation.x = PI / 2;
+    group.add(ring);
+    group.add(mk(new THREE.CylinderGeometry(3.3, 3.3, 2.2, 56, 1, true), glassMat(0xd6efff, 0.18), 0, 1.65, 0));
+    group.add(mk(new THREE.CylinderGeometry(3.3, 3.3, 0.1, 56), glassMat(0xd6efff, 0.4), 0, 0.55, 0));
+    g.bathMat = liquidMat(0x6ec6ff, 0.4);
+    group.add(mk(new THREE.CylinderGeometry(3.24, 3.24, 1.75, 56), g.bathMat, 0, 1.5, 0));
+    g.bathBub = makeInst(new THREE.SphereGeometry(0.06, 8, 6),
+      new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: 0.6, depthWrite: false }), 36);
+    group.add(g.bathBub);
+
+    // ba ống nghiệm: tinh bột/Iot, glucose/Fehling, protein/Biuret
+    const defs = [
+      { x: -2.0, name: 'Tinh bột + Iot', col: '#ce93d8' },
+      { x: 0.0, name: 'Glucose + Fehling', col: '#ff8a65' },
+      { x: 2.0, name: 'Protein + Biuret', col: '#b388ff' }
+    ];
+    const TB = 0.9, TR = 0.45, TH = 3.3;
+    g.tubes = [];
+    defs.forEach(function (d) {
+      addTube(group, d.x, TB, TR, TH, glassMat(0xdff1ff, 0.22));
+      const mat = liquidMat(0xf2efe8, 0.5);
+      const liq = makeLiquid(group, d.x, TB, TR, mat);
+      const sedMat = liquidMat(0xb7410e, 0.0);
+      const sed = mk(new THREE.CylinderGeometry(1, 1, 1, 20), sedMat, d.x, TB + 0.3, 0);
+      sed.scale.set(TR - 0.08, 0.001, TR - 0.08);
+      group.add(sed);
+      const lbl = createText3D(d.name, d.col, 1.9);
+      lbl.position.set(d.x, 4.75, 0.6);
+      group.add(lbl);
+      g.tubes.push({ x: d.x, mat: mat, liq: liq, sed: sed, sedMat: sedMat });
+    });
+    // thanh kẹp ống nghiệm
+    group.add(box(5.6, 0.12, 0.2, darkSteel, 0, 3.7, 0));
+    // giọt thuốc thử rơi vào từng ống
+    g.drops = makeInst(new THREE.SphereGeometry(0.07, 10, 8), new THREE.MeshBasicMaterial({ color: 0xffffff }), 3);
+    g.drops.setColorAt(0, new THREE.Color(0xc77700));
+    g.drops.setColorAt(1, new THREE.Color(0x1e5bd8));
+    g.drops.setColorAt(2, new THREE.Color(0x3b6fe0));
+    g.drops.instanceColor.needsUpdate = true;
+    group.add(g.drops);
+    // nhiệt kế
+    group.add(mk(new THREE.CylinderGeometry(0.055, 0.055, 3.4, 12, 1, true), glassMat(0xffffff, 0.35), 3.9, 2.4, 0.5));
+    g.merc = cyl(0.03, 0.03, 1, 8, new THREE.MeshBasicMaterial({ color: 0xff1744 }), 3.9, 1.0, 0.5);
+    group.add(g.merc);
+    group.add(cyl(0.07, 0.07, 6.2, 16, steel, 4.9, 3.1, 0));
+    group.add(box(1.6, 0.2, 1.2, darkSteel, 4.9, 0.1, 0));
+    group.add(box(5.0, 0.1, 0.18, darkSteel, 2.4, 5.0, 0));
+
+    addLedStack(group, g, 9.2, [4.1, 2.95, 1.8], 6.4, ['#00e5ff', '#ffd54f', '#69f0ae'], 'GLUCID VÀ PROTEIN', 5.35);
+    g.cur = { dep: 0, blend: 0 };
+    g.tgt = { dep: 0, blend: 0, T: 70, fill: 1.0 };
+    return g;
+  }
+
+  function applyGluc(g) {
+    const dep = g.cur.dep, bl = g.cur.blend;
+    // ống 1: tinh bột + Iot -> xanh tím
+    let t0 = g.tubes[0];
+    t0.mat.color.setHex(0xf2efe8).lerp(new THREE.Color(0x2a1b6e), clamp(dep * 1.1, 0, 1));
+    t0.mat.opacity = 0.5 + 0.4 * dep;
+    // ống 2: glucose + Fehling: xanh lam -> đỏ gạch khi đun nóng
+    let t1 = g.tubes[1];
+    t1.mat.color.setHex(0xcfe3ff).lerp(new THREE.Color(0x2060c8), clamp(dep * 1.1, 0, 1)).lerp(new THREE.Color(0xb7410e), clamp(bl, 0, 1));
+    t1.mat.opacity = 0.45 + 0.45 * dep;
+    t1.sedMat.opacity = clamp(bl * 1.2, 0, 0.95) * clamp(dep * 1.5, 0, 1);
+    t1.sed.scale.y = Math.max(0.001, 0.55 * bl * dep);
+    t1.sed.position.y = 0.9 + 0.3 + t1.sed.scale.y / 2;
+    // ống 3: protein + Biuret -> tím
+    let t2 = g.tubes[2];
+    t2.mat.color.setHex(0xcfe3ff).lerp(new THREE.Color(0x7b1fa2), clamp(dep * 1.1, 0, 1));
+    t2.mat.opacity = 0.45 + 0.45 * dep;
+  }
+
+  function updateGluc(st, conc, T, vol) {
+    const g = st.g9;
+    if (!g || g.id !== 'GLUC') return;
+    conc = clamp(num(conc, 5), 1, 20);
+    T = clamp(num(T, 70), 20, 100);
+    vol = clamp(num(vol, 3), 1, 10);
+    const dep = clamp(0.2 + 0.8 * conc / 20, 0, 1) * (0.35 + 0.65 * clamp(vol / 6, 0, 1));
+    const heatF = clamp((T - 50) / 30, 0, 1);            // Fehling cần đun nóng >= ~60°C
+    g.tgt.dep = dep;
+    g.tgt.blend = heatF;
+    g.tgt.T = T;
+    const fill = 0.9 + vol * 0.1;
+    for (let i = 0; i < g.tubes.length; i++) g.tubes[i].liq.level(fill);
+    g.fillTop = 0.9 + 0.45 + fill;
+    g.plateMat.emissiveIntensity = clamp((T - 20) / 80, 0, 1) * 1.6;
+    const mh = Math.max(0.02, (T - 20) / 80 * 2.6);
+    g.merc.scale.y = mh;
+    g.merc.position.y = 0.9 + mh / 2;
+    if (!g.first) { g.first = true; g.cur.dep = dep; g.cur.blend = heatF; }
+    const d100 = Math.round(dep * 100);
+    const starch = dep >= 0.3 ? 'Xanh tím' : 'Xanh tím nhạt';
+    const gluc = T >= 60 ? (dep >= 0.3 ? 'Đỏ gạch' : 'Đỏ gạch nhạt') : 'Chưa kết tủa (cần ≥ 60°C)';
+    const prot = dep >= 0.3 ? 'Tím đặc trưng' : 'Tím nhạt';
+    updateText3D(g.leds[0], 'Mẫu thử: Glucid/Protein | Nồng độ: ' + fmt(conc, 0) + '% | Nhiệt độ: ' + fmt(T, 0) + '°C');
+    updateText3D(g.leds[1], 'Hiện tượng nhận biết: ' + starch + ' | ' + gluc + ' | ' + prot);
+    updateText3D(g.leds[2], 'Thuốc thử: ' + fmt(vol, 0) + ' ml | Độ đậm màu: ' + d100 + '%');
+    g.last = { conc: conc, T: T, vol: vol, dep: dep, blend: heatF, starch: starch, gluc: gluc, prot: prot };
+    applyGluc(g);
+  }
+
+  function animateGluc(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'GLUC' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    g.t += dt;
+    const t = g.t;
+    const f = 1 - Math.exp(-2.2 * dt);
+    g.cur.dep += (g.tgt.dep - g.cur.dep) * f;
+    g.cur.blend += (g.tgt.blend - g.cur.blend) * f;
+    applyGluc(g);
+    // bọt/hơi nước khi đun nóng
+    const nb = Math.round(clamp((g.tgt.T - 55) / 45, 0, 1) * 36);
+    for (let i = 0; i < 36; i++) {
+      if (i < nb) {
+        const ph = (t * 0.55 + i * 0.113) % 1;
+        const a = i * 2.39;
+        setInst(g.bathBub, i, Math.cos(a) * 2.8 * (0.4 + 0.6 * ((i * 7) % 5) / 5), 0.7 + ph * 1.5, Math.sin(a) * 1.2, 1, 1, 1, 0);
+      } else setInst(g.bathBub, i, 0, 0, 0, 0.0001, 0.0001, 0.0001, 0);
+    }
+    g.bathBub.instanceMatrix.needsUpdate = true;
+    // giọt thuốc thử rơi vào từng ống
+    for (let i = 0; i < 3; i++) {
+      const ph = (t * 0.5 + i * 0.33) % 1;
+      const yTop = 4.4, yBot = g.fillTop || 2.5;
+      const y = yTop - ph * Math.max(0.2, yTop - yBot);
+      setInst(g.drops, i, g.tubes[i].x, y, 0, 1, 1.25, 1, 0);
+    }
+    g.drops.instanceMatrix.needsUpdate = true;
+  }
+
+  /* ===================================================================
+   *  BÀI 9-7 : CÁC QUY LUẬT DI TRUYỀN (nội bộ: MENDEL)
+   *  Biểu đồ cột 3D: lai 1 cặp (tự thụ qua F1..F5) + lai 2 cặp (9:3:3:1)
+   * =================================================================== */
+  const MD = { H: 2.2, XG: [-5.2, -3.9, -2.6, -1.3, 0.0], XR: [2.7, 3.55, 4.4, 5.25] };
+  const MD_COLS = [0xffd54f, 0x66bb6a];
+  const MD_COLS2 = [0xffd54f, 0xff9800, 0x66bb6a, 0x26a69a];
+
+  function makeBar(group, x, colorHex) {
+    const m = mk(new THREE.BoxGeometry(0.5, 1, 0.5), stdMat(colorHex, 0.2, 0.45, { emissive: colorHex, emissiveIntensity: 0.12 }), x, 0, 0);
+    m.scale.y = 0.001;
+    const gh = mk(new THREE.BoxGeometry(0.64, 1, 0.64), new THREE.MeshBasicMaterial({
+      color: 0xffffff, transparent: true, opacity: 0.2, depthWrite: false }), x, 0, 0);
+    gh.scale.y = 0.001;
+    const lb = createGlyph3D('0%', '#ffffff', 0.62);
+    lb.position.set(x, 0.3, 0.4);
+    group.add(m);
+    group.add(gh);
+    group.add(lb);
+    return { mesh: m, ghost: gh, label: lb, x: x, cur: 0, tgt: 0, gcur: 0, gtgt: 0, show: false };
+  }
+  function applyBar(b) {
+    b.mesh.scale.y = Math.max(0.001, b.cur);
+    b.mesh.position.y = b.cur / 2;
+    b.ghost.scale.y = Math.max(0.001, b.gcur);
+    b.ghost.position.y = b.gcur / 2;
+    b.label.position.y = Math.max(b.cur, b.gcur) + 0.32;
+    b.mesh.visible = b.show;
+    b.ghost.visible = b.show;
+    b.label.visible = b.show;
+  }
+
+  function buildMendel(group, st) {
+    const g = { id: 'MENDEL', t: 0 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    group.add(box(13.2, 0.2, 3.0, stdMat(0x2f3946, 0.35, 0.65), 0, -0.1, 0));
+    const grid = new THREE.MeshBasicMaterial({ color: 0x5f7488, transparent: true, opacity: 0.55 });
+    group.add(box(7.4, 0.015, 0.015, grid, -2.6, MD.H * 0.5, -0.5));
+    group.add(box(7.4, 0.015, 0.015, grid, -2.6, MD.H, -0.5));
+    group.add(box(3.8, 0.015, 0.015, grid, 4.0, MD.H * 0.5, -0.5));
+    group.add(box(3.8, 0.015, 0.015, grid, 4.0, MD.H, -0.5));
+    const yl50 = createGlyph3D('50%', '#cfd8dc', 0.5); yl50.position.set(-6.25, MD.H * 0.5, 0.2); group.add(yl50);
+    const yl100 = createGlyph3D('100%', '#cfd8dc', 0.55); yl100.position.set(-6.25, MD.H, 0.2); group.add(yl100);
+
+    // lai 1 cặp tính trạng qua các thế hệ F1..F5 (trội: vàng, lặn: xanh lá)
+    g.barsL = [];
+    for (let gi = 0; gi < 5; gi++) {
+      const bd = makeBar(group, MD.XG[gi] - 0.32, MD_COLS[0]);
+      const br = makeBar(group, MD.XG[gi] + 0.32, MD_COLS[1]);
+      g.barsL.push([bd, br]);
+      const gl = createGlyph3D('F' + (gi + 1), '#cfd8dc', 0.55);
+      gl.position.set(MD.XG[gi], -0.4, 0.4);
+      group.add(gl);
+      g.barsL[gi].glyph = gl;
+    }
+    // lai 2 cặp tính trạng F2 (9 : 3 : 3 : 1)
+    g.barsR = [];
+    const names = ['9', '3', '3', '1'];
+    for (let k = 0; k < 4; k++) {
+      g.barsR.push(makeBar(group, MD.XR[k], MD_COLS2[k]));
+      const nl = createGlyph3D(names[k], '#' + MD_COLS2[k].toString(16).padStart(6, '0'), 0.55);
+      nl.position.set(MD.XR[k], -0.4, 0.4);
+      group.add(nl);
+    }
+    labelTag(group, 'Lai 1 cặp: tự thụ qua các thế hệ (vàng: trội, xanh: lặn)', '#ffffff', 6.2, -2.6, 3.2, 0.2);
+    labelTag(group, 'F2 lai 2 cặp (lý thuyết 9:3:3:1)', '#ffffff', 4.0, 4.0, 3.2, 0.2);
+    addLedStack(group, g, 0.4, [6.0, 5.0, 4.1], 6.6, ['#00e5ff', '#69f0ae', '#ffd54f'], null, 0);
+    return g;
+  }
+
+  function mendelTheory(v, G) {
+    const out = [{ dom: 1, rec: 0 }];
+    let AA = 0, Aa = 1, aa = 0;
+    const d2 = (1 + v) * (1 + v);
+    for (let gen = 2; gen <= G; gen++) {
+      const nAA = AA + Aa / d2;
+      const nAa = Aa * 2 * v / d2;
+      const naa = aa + Aa * v * v / d2;
+      AA = nAA; Aa = nAa; aa = naa;
+      out.push({ dom: AA + Aa, rec: aa });
+    }
+    return out;
+  }
+
+  function updateMendel(st, N, v, G) {
+    const g = st.g9;
+    if (!g || g.id !== 'MENDEL') return;
+    N = Math.round(clamp(num(N, 500), 100, 2000));
+    v = clamp(num(v, 1), 0.5, 1);
+    G = Math.round(clamp(num(G, 2), 1, 5));
+    const th = mendelTheory(v, 5);
+    const vq = Math.round(v * 100);
+    let lastObs = null;
+    for (let gi = 0; gi < 5; gi++) {
+      const rng = makeRng(N * 131 + vq * 7919 + (gi + 1) * 104729);
+      const p = th[gi].rec;
+      const nRec = clamp(Math.round(N * p + Math.sqrt(N * p * (1 - p)) * gauss(rng)), 0, N);
+      const nDom = N - nRec;
+      const show = gi < G;
+      const bd = g.barsL[gi][0], br = g.barsL[gi][1];
+      bd.show = br.show = show;
+      g.barsL[gi].glyph.visible = show;
+      bd.tgt = nDom / N * MD.H; br.tgt = nRec / N * MD.H;
+      bd.gtgt = th[gi].dom * MD.H; br.gtgt = p * MD.H;
+      updateGlyph3D(bd.label, fmt(nDom / N * 100, 1) + '%');
+      updateGlyph3D(br.label, fmt(nRec / N * 100, 1) + '%');
+      if (gi === G - 1) lastObs = { nDom: nDom, nRec: nRec, th: th[gi] };
+    }
+    // lai 2 cặp: F2, gamete lặn có sức sống v ở cả hai locus
+    const q = v / (1 + v), q2 = q * q;
+    const ph = [(1 - q2) * (1 - q2), (1 - q2) * q2, q2 * (1 - q2), q2 * q2];
+    const rng2 = makeRng(N * 977 + vq * 31 + 7);
+    let rest = N, restP = 1;
+    const cnt = [];
+    for (let k = 0; k < 4; k++) {
+      if (k === 3) { cnt.push(rest); break; }
+      const pk = clamp(ph[k] / restP, 0, 1);
+      const c = clamp(Math.round(rest * pk + Math.sqrt(rest * pk * (1 - pk)) * gauss(rng2)), 0, rest);
+      cnt.push(c);
+      rest -= c;
+      restP -= ph[k];
+    }
+    for (let k = 0; k < 4; k++) {
+      const b = g.barsR[k];
+      b.show = true;
+      b.tgt = cnt[k] / N * MD.H;
+      b.gtgt = ph[k] * MD.H;
+      updateGlyph3D(b.label, fmt(cnt[k] / N * 100, 1) + '%');
+    }
+    if (!g.first) {
+      g.first = true;
+      const all = g.barsL.reduce(function (a, p) { return a.concat(p); }, []).concat(g.barsR);
+      all.forEach(function (b) { b.cur = b.tgt; b.gcur = b.gtgt; });
+    }
+    // bảng LED
+    updateText3D(g.leds[0], 'Số lượng thống kê N = ' + N + ' cá thể | Số thế hệ: ' + G);
+    if (G === 1) {
+      updateText3D(g.leds[1], 'F1: 100% kiểu hình trội (đồng tính) - đúng quy luật Mendel');
+    } else {
+      const obsR = lastObs.nRec > 0 ? lastObs.nDom / lastObs.nRec : Infinity;
+      const thR = lastObs.th.rec > 0 ? lastObs.th.dom / lastObs.th.rec : Infinity;
+      updateText3D(g.leds[1], 'Tỉ lệ phân li F' + G + ' thực tế ' + fmt(obsR, 2) + ' trội : 1 lặn ≈ Mendel ' + fmt(thR, 2) + ' : 1');
+    }
+    const per16 = function (arr, tot) { return arr.map(function (c) { return fmt(c / tot * 16, 1); }).join(' : '); };
+    updateText3D(g.leds[2], 'Lai 2 cặp: thực tế ' + per16(cnt, N) + ' (lý thuyết ' + per16(ph, 1) + ')');
+    g.last = { N: N, v: v, G: G, cnt2: cnt, obs: lastObs };
+    const all2 = g.barsL.reduce(function (a, p) { return a.concat(p); }, []).concat(g.barsR);
+    all2.forEach(applyBar);
+  }
+
+  function animateMendel(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'MENDEL' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    const f = 1 - Math.exp(-7 * dt);
+    const all = g.barsL.reduce(function (a, p) { return a.concat(p); }, []).concat(g.barsR);
+    for (let i = 0; i < all.length; i++) {
+      const b = all[i];
+      const tg = b.show ? b.tgt : 0, gt = b.show ? b.gtgt : 0;
+      if (Math.abs(b.cur - tg) > 1e-4 || Math.abs(b.gcur - gt) > 1e-4) {
+        b.cur += (tg - b.cur) * f;
+        b.gcur += (gt - b.gcur) * f;
+        applyBar(b);
+      }
+    }
+  }
+
+  /* ===================================================================
+   *  BÀI 9-8 : MÔ HÌNH CẤU TRÚC KHÔNG GIAN ADN (nội bộ: DNA)
+   * =================================================================== */
+  const DN = { R: 0.4, SEP: 1.25, MAXN: 500, RAMP: 12 };
+  const DN_BASE_HEX = [0xff5252, 0x40c4ff, 0xffd740, 0x69f0ae];   // A, T, G, C
+
+  function buildDNA(group, st) {
+    const g = { id: 'DNA', t: 0, N: 100, rho: 1.2, speed: 5, fork: 0, phase: 'idle', wait: 1.0, pct: -1 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    group.add(box(10.8, 0.2, 3.2, stdMat(0x2f3946, 0.35, 0.65), 0, -2.0, 0));
+    const bounds = box(9.8, 3.6, 3.6, new THREE.MeshBasicMaterial({ color: 0xffffff }), 0, 0, 0);
+    bounds.material.visible = false;
+    group.add(bounds);
+    g.dnaG = new THREE.Group();
+    group.add(g.dnaG);
+    g.bb = makeInst(new THREE.SphereGeometry(0.11, 10, 8), stdMat(0xffffff, 0.3, 0.35), 4 * DN.MAXN);
+    g.rung = makeInst(new THREE.CylinderGeometry(0.05, 0.05, DN.R, 8), stdMat(0xffffff, 0.15, 0.4, { emissive: 0x222222 }), 4 * DN.MAXN);
+    g.hb = makeInst(new THREE.SphereGeometry(0.035, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffffff }), 6 * DN.MAXN);
+    g.dnaG.add(g.bb);
+    g.dnaG.add(g.rung);
+    g.dnaG.add(g.hb);
+    g.cols = {
+      o1: new THREE.Color(0x78909c), o2: new THREE.Color(0xb0bec5), nw: new THREE.Color(0x00e676),
+      base: DN_BASE_HEX.map(function (h) { return new THREE.Color(h); })
+    };
+    // enzyme: helicase + 2 DNA polymerase
+    const enzMat = stdMat(0x7e57c2, 0.3, 0.4, { emissive: 0x4527a0, emissiveIntensity: 0.6 });
+    g.poly1 = sph(0.3, enzMat, 0, 0, 0);
+    g.poly2 = sph(0.3, enzMat, 0, 0, 0);
+    const hel = mk(new THREE.TorusGeometry(0.34, 0.1, 10, 24), stdMat(0xff7043, 0.3, 0.4, { emissive: 0xbf360c, emissiveIntensity: 0.5 }), 0, 0, 0);
+    hel.rotation.y = PI / 2;
+    g.helic = hel;
+    g.poly1.visible = g.poly2.visible = g.helic.visible = false;
+    group.add(g.poly1);
+    group.add(g.poly2);
+    group.add(g.helic);
+    g.lblPoly = createText3D('DNA polymerase', '#d1c4e9', 2.1);
+    g.lblHel = createText3D('Helicase', '#ffab91', 1.5);
+    g.lblPoly.visible = g.lblHel.visible = false;
+    group.add(g.lblPoly);
+    group.add(g.lblHel);
+    labelTag(group, 'A-T: 2 liên kết H | G-C: 3 liên kết H', '#cfd8dc', 4.6, 0, -1.65, 0.6);
+    g.baseA = new Uint8Array(DN.MAXN);
+    addLedStack(group, g, 0, [4.4, 3.4, 2.4], 6.6, ['#00e5ff', '#ffd54f', '#69f0ae'], null, 0);
+    return g;
+  }
+
+  function layoutDNA(g) {
+    const N = g.N, step = Math.min(0.11, 9.6 / N), R = DN.R, f = g.fork, ramp = DN.RAMP;
+    const bb = g.bb, rung = g.rung, hb = g.hb, C = g.cols;
+    let nb = 0, nr = 0, nh = 0;
+    const emit = function (x, yc, th1, bbc1, bc1, th2, bbc2, bc2, nH) {
+      const c1 = Math.cos(th1), s1 = Math.sin(th1), c2 = Math.cos(th2), s2 = Math.sin(th2);
+      setInst(bb, nb, x, yc + R * c1, R * s1, 1, 1, 1, 0); bb.setColorAt(nb++, bbc1);
+      setInst(bb, nb, x, yc + R * c2, R * s2, 1, 1, 1, 0); bb.setColorAt(nb++, bbc2);
+      setInst(rung, nr, x, yc + R / 2 * c1, R / 2 * s1, 1, 1, 1, th1); rung.setColorAt(nr++, bc1);
+      setInst(rung, nr, x, yc + R / 2 * c2, R / 2 * s2, 1, 1, 1, th2); rung.setColorAt(nr++, bc2);
+      if (nH === 3) {
+        setInst(hb, nh++, x, yc - 0.12 * c1, -0.12 * s1, 1, 1, 1, 0);
+        setInst(hb, nh++, x, yc, 0, 1, 1, 1, 0);
+        setInst(hb, nh++, x, yc + 0.12 * c1, 0.12 * s1, 1, 1, 1, 0);
+      } else {
+        setInst(hb, nh++, x, yc - 0.07 * c1, -0.07 * s1, 1, 1, 1, 0);
+        setInst(hb, nh++, x, yc + 0.07 * c1, 0.07 * s1, 1, 1, 1, 0);
+      }
+    };
+    for (let i = 0; i < N; i++) {
+      const x = (i - (N - 1) / 2) * step;
+      const th = i * 2 * PI / 10;
+      const base = g.baseA[i], comp = base ^ 1;
+      const nH = base < 2 ? 2 : 3;
+      let t = clamp((f - i) / ramp, 0, 1);
+      t = t * t * (3 - 2 * t);
+      if (t < 0.001) {
+        emit(x, 0, th, C.o1, C.base[base], th + PI, C.o2, C.base[comp], nH);
+      } else {
+        const sep = t * DN.SEP;
+        emit(x, sep, th, C.o1, C.base[base], th + PI, C.nw, C.base[comp], nH);
+        emit(x, -sep, th + PI, C.o2, C.base[comp], th, C.nw, C.base[base], nH);
+      }
+    }
+    bb.count = nb; rung.count = nr; hb.count = nh;
+    bb.instanceMatrix.needsUpdate = true; rung.instanceMatrix.needsUpdate = true; hb.instanceMatrix.needsUpdate = true;
+    bb.instanceColor.needsUpdate = true; rung.instanceColor.needsUpdate = true;
+    g.step = step;
+    // vị trí enzyme tại chạc nhân đôi
+    const running = g.phase === 'run';
+    const xf = (Math.min(f, N + ramp) - (N - 1) / 2) * step;
+    g.helic.visible = g.poly1.visible = g.poly2.visible = running;
+    g.lblPoly.visible = g.lblHel.visible = running;
+    if (running) {
+      const sp = 0.75 * clamp(f / ramp, 0, 1) * DN.SEP;
+      g.helic.position.set(xf + 0.2, 0, 0);
+      g.poly1.position.set(xf - 0.35, sp, 0.1);
+      g.poly2.position.set(xf - 0.35, -sp, 0.1);
+      g.lblPoly.position.set(xf - 0.35, 2.15, 0.8);
+      g.lblHel.position.set(xf + 0.9, -1.6, 0.8);
+    }
+  }
+
+  function updateDNA(st, N, rho, speed) {
+    const g = st.g9;
+    if (!g || g.id !== 'DNA') return;
+    N = Math.round(clamp(num(N, 100), 10, DN.MAXN));
+    rho = clamp(num(rho, 1.2), 0.5, 2.0);
+    speed = Math.round(clamp(num(speed, 5), 1, 10));
+    g.N = N; g.rho = rho; g.speed = speed;
+    const gcFrac = rho / (1 + rho);                      // G-C / A-T = rho
+    for (let i = 0; i < DN.MAXN; i++) {
+      const gc = hash01(i, 1) < gcFrac;
+      const pick = hash01(i, 2) < 0.5 ? 0 : 1;
+      g.baseA[i] = gc ? (2 + pick) : pick;              // A,T,G,C = 0,1,2,3
+    }
+    if (g.fork > N + DN.RAMP) g.fork = N + DN.RAMP;
+    layoutDNA(g);
+    g.pct = -1;
+    updateText3D(g.leds[0], 'Số cặp Nu: N = ' + N + ' cặp | Tỉ lệ G-C/A-T = ' + fmt(rho, 1));
+    updateText3D(g.leds[1], 'Chiều dài phân tử ADN = N × 3.4 Å = ' + fmt(N * 0.34, 1) + ' nm (' + fmt(N / 10, 1) + ' vòng xoắn)');
+    refreshDnaPct(g);
+    g.last = { N: N, rho: rho, speed: speed, lengthNm: N * 0.34, turns: N / 10, gcPct: gcFrac * 100 };
+  }
+  function refreshDnaPct(g) {
+    const pct = Math.round(clamp(g.fork / g.N, 0, 1) * 100);
+    if (pct !== g.pct) {
+      g.pct = pct;
+      updateText3D(g.leds[2], 'Nhân đôi ADN (' + g.speed + 'x): ' + pct + '% | G-C = ' + Math.round(g.rho / (1 + g.rho) * 100) + '%');
+    }
+  }
+
+  function animateDNA(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'DNA' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    g.t += dt;
+    g.dnaG.rotation.x += 0.25 * dt;
+    if (g.phase === 'idle') {
+      g.wait -= dt;
+      if (g.wait <= 0) { g.phase = 'run'; g.fork = 0; }
+    } else if (g.phase === 'run') {
+      g.fork += g.speed * Math.max(3, g.N / 20) * dt;   // tốc độ tháo xoắn + tổng hợp mạch mới
+      if (g.fork >= g.N + DN.RAMP) { g.fork = g.N + DN.RAMP; g.phase = 'hold'; g.wait = 2.2; }
+      layoutDNA(g);
+      refreshDnaPct(g);
+    } else {
+      g.wait -= dt;
+      if (g.wait <= 0) { g.phase = 'idle'; g.fork = 0; g.wait = 1.0; layoutDNA(g); refreshDnaPct(g); }
+    }
+    if (g.phase === 'run') {
+      g.poly1.scale.setScalar(1 + 0.08 * Math.sin(g.t * 9));
+      g.poly2.scale.setScalar(1 + 0.08 * Math.sin(g.t * 9 + 1.5));
+      g.helic.rotation.x += 6 * dt;
+    }
+  }
+
+  /* ===================================================================
+   *  BÀI 9-9 : DI TRUYỀN HỌC ỨNG DỤNG (nội bộ: BREED)
+   *  Quần thể cây trồng: dòng thuần / biến dị tổ hợp / cá thể ưu thế được chọn
+   * =================================================================== */
+  function buildBreed(group, st) {
+    const g = { id: 'BREED', t: 0, nElite: 0 };
+    st.g9 = g;
+    g.lights = addLights(group);
+    g.field = new THREE.Group();
+    g.field.position.set(-1.0, 1.9, 0);
+    g.field.rotation.x = 0.65;
+    group.add(g.field);
+    g.field.add(box(9.6, 0.2, 5.6, stdMat(0x4e342e, 0.1, 0.85), 0, 0, 0));
+    g.field.add(box(9.4, 0.05, 5.4, stdMat(0x2e7d32, 0.0, 0.9), 0, 0.12, 0));
+    const MAXN = 1000;
+    g.stems = makeInst(new THREE.CylinderGeometry(0.03, 0.03, 1, 6), stdMat(0x558b2f, 0.0, 0.8), MAXN);
+    g.heads = makeInst(new THREE.SphereGeometry(1, 10, 8), stdMat(0xffffff, 0.1, 0.5), MAXN);
+    g.halos = makeInst(new THREE.SphereGeometry(1, 12, 10), new THREE.MeshBasicMaterial({
+      color: 0xffd54f, transparent: true, opacity: 0.35, blending: THREE.AdditiveBlending, depthWrite: false }), MAXN);
+    g.field.add(g.stems);
+    g.field.add(g.heads);
+    g.field.add(g.halos);
+    g.eliteP = new Float32Array(MAXN * 4);
+    // biểu đồ chọn lọc nhân tạo qua 5 vòng
+    g.chart = new THREE.Group();
+    g.chart.position.set(6.3, 0.2, 0.6);
+    group.add(g.chart);
+    g.chart.add(box(3.3, 0.1, 1.0, stdMat(0x2f3946, 0.35, 0.65), 0.2, -0.05, 0));
+    g.bars = [];
+    for (let i = 0; i < 5; i++) {
+      const x = -0.9 + i * 0.55;
+      const b = mk(new THREE.BoxGeometry(0.4, 1, 0.4), stdMat(0xffc107, 0.3, 0.4, { emissive: 0xff8f00, emissiveIntensity: 0.25 }), x, 0, 0);
+      b.scale.y = 0.001;
+      g.chart.add(b);
+      const lb = createGlyph3D('0', '#ffffff', 0.5);
+      lb.position.set(x, 0.3, 0.3);
+      g.chart.add(lb);
+      const vl = createGlyph3D('V' + (i + 1), '#cfd8dc', 0.45);
+      vl.position.set(x, -0.35, 0.3);
+      g.chart.add(vl);
+      g.bars.push({ mesh: b, label: lb, cur: 0, tgt: 0 });
+    }
+    const ct = createText3D('Chọn lọc nhân tạo qua các vòng', '#ffd54f', 3.6);
+    ct.position.set(0.2, 2.85, 0.3);
+    g.chart.add(ct);
+    labelTag(group, 'Dòng thuần', '#66bb6a', 2.0, -4.2, 1.15, 1.2);
+    labelTag(group, 'Biến dị tổ hợp', '#ce93d8', 2.4, -1.5, 1.15, 1.2);
+    labelTag(group, 'Ưu thế được chọn', '#ffd54f', 2.6, 1.4, 1.15, 1.2);
+    addLedStack(group, g, 1.0, [6.9, 5.8, 4.7], 7.6, ['#00e5ff', '#ffd54f', '#69f0ae'], null, 0);
+    return g;
+  }
+
+  function updateBreed(st, recPct, effPct, N) {
+    const g = st.g9;
+    if (!g || g.id !== 'BREED') return;
+    recPct = clamp(num(recPct, 10), 1, 50);
+    effPct = clamp(num(effPct, 75), 10, 100);
+    N = Math.round(clamp(num(N, 200), 50, 1000));
+    const r = recPct / 100, e = effPct / 100;
+    const cols = Math.ceil(Math.sqrt(N * 1.7));
+    const rows = Math.ceil(N / cols);
+    const sp = Math.min(9.0 / cols, 5.0 / rows);
+    const sizeF = clamp(sp / 0.2, 0.5, 1.8);
+    const headR0 = clamp(sp * 0.42, 0.04, 0.12);
+    const col = new THREE.Color();
+    let nPure = 0, nRec = 0, nElite = 0;
+    for (let i = 0; i < N; i++) {
+      const cx = i % cols, cz = Math.floor(i / cols);
+      const x = (cx - (cols - 1) / 2) * sp;
+      const z = (cz - (rows - 1) / 2) * sp;
+      const h1 = hash01(i, 11), h2 = hash01(i, 12), h3 = hash01(i, 13);
+      let sz = 1, stemH = 0.32 * sizeF;
+      if (h1 >= r) {                                     // dòng thuần chủng
+        nPure++;
+        col.setHex(h3 < 0.5 ? 0x43a047 : 0xfbc02d);
+      } else if (h2 >= e) {                              // biến dị tổ hợp chưa đạt chuẩn
+        nRec++;
+        col.setHSL(0.72 + 0.25 * h3, 0.55, 0.55);
+        sz = 0.8 + 0.5 * h3;
+        stemH *= 0.9;
+      } else {                                           // cá thể ưu thế đạt chuẩn chọn giống
+        nRec++;
+        col.setHex(0xffd54f);
+        sz = 1.7;
+        stemH *= 1.35;
+        const k = nElite * 4;
+        g.eliteP[k] = x; g.eliteP[k + 1] = 0.14 + stemH + headR0 * sz * 0.8; g.eliteP[k + 2] = z; g.eliteP[k + 3] = headR0 * sz;
+        nElite++;
+      }
+      const hr = headR0 * sz;
+      setInst(g.stems, i, x, 0.14 + stemH / 2, z, 1, stemH, 1, 0);
+      setInst(g.heads, i, x, 0.14 + stemH + hr * 0.8, z, hr, hr, hr, 0);
+      g.heads.setColorAt(i, col);
+    }
+    g.stems.count = N; g.heads.count = N; g.halos.count = nElite;
+    g.stems.instanceMatrix.needsUpdate = true;
+    g.heads.instanceMatrix.needsUpdate = true;
+    g.heads.instanceColor.needsUpdate = true;
+    g.nElite = nElite;
+    for (let k = 0; k < nElite; k++) {
+      const j = k * 4;
+      setInst(g.halos, k, g.eliteP[j], g.eliteP[j + 1], g.eliteP[j + 2], g.eliteP[j + 3] * 2.1, g.eliteP[j + 3] * 2.1, g.eliteP[j + 3] * 2.1, 0);
+    }
+    g.halos.instanceMatrix.needsUpdate = true;
+    // biểu đồ chọn lọc: cộng dồn số cá thể ưu thế qua 5 vòng chọn
+    const maxRec = Math.max(1, nRec);
+    for (let i = 0; i < 5; i++) {
+      const Eg = nRec * (1 - Math.pow(1 - e, i + 1));
+      g.bars[i].tgt = Eg / maxRec * 2.2;
+      updateGlyph3D(g.bars[i].label, String(Math.round(Eg)));
+    }
+    if (!g.first) { g.first = true; g.bars.forEach(function (b) { b.cur = b.tgt; }); }
+    g.bars.forEach(function (b) {
+      b.mesh.scale.y = Math.max(0.001, b.cur);
+      b.mesh.position.y = b.cur / 2;
+      b.label.position.y = b.cur + 0.32;
+    });
+    updateText3D(g.leds[0], 'Biến dị tổ hợp: ' + fmt(recPct, 0) + '% | Hiệu quả chọn giống: ' + fmt(effPct, 0) + '% | Quy mô: ' + N + ' cá thể');
+    updateText3D(g.leds[1], 'Số lượng cá thể ưu thế thu được sau chọn lọc: ' + nElite + ' / ' + N + ' (' + fmt(nElite / N * 100, 1) + '%)');
+    updateText3D(g.leds[2], 'Dòng thuần: ' + nPure + ' | Biến dị tổ hợp: ' + nRec + ' (chưa đạt: ' + (nRec - nElite) + ') | Ưu thế: ' + nElite);
+    g.last = { rec: recPct, eff: effPct, N: N, nPure: nPure, nRec: nRec, nElite: nElite };
+  }
+
+  function animateBreed(st, dt) {
+    const g = st.g9;
+    if (!g || g.id !== 'BREED' || !g.last) return;
+    dt = Math.min(dt, 0.05);
+    g.t += dt;
+    const t = g.t;
+    // quầng sáng của cá thể ưu thế nhấp nháy
+    for (let k = 0; k < g.nElite; k++) {
+      const j = k * 4;
+      const s = g.eliteP[j + 3] * (2.0 + 0.45 * Math.sin(t * 3 + k * 0.7));
+      setInst(g.halos, k, g.eliteP[j], g.eliteP[j + 1], g.eliteP[j + 2], s, s, s, 0);
+    }
+    g.halos.instanceMatrix.needsUpdate = true;
+    // cột biểu đồ tăng mượt
+    const f = 1 - Math.exp(-6 * dt);
+    for (let i = 0; i < g.bars.length; i++) {
+      const b = g.bars[i];
+      if (Math.abs(b.cur - b.tgt) > 1e-4) {
+        b.cur += (b.tgt - b.cur) * f;
+        b.mesh.scale.y = Math.max(0.001, b.cur);
+        b.mesh.position.y = b.cur / 2;
+        b.label.position.y = b.cur + 0.32;
+      }
+    }
+  }
+
+  /* ===================================================================
    *  API CÔNG KHAI
    *    '9-1' = Hiện tượng khúc xạ ánh sáng      (nội bộ: REFR)
    *    '9-2' = Đo tiêu cự thấu kính hội tụ       (nội bộ: LENS)
    *    '9-3' = Định luật Ohm và mạch điện        (nội bộ: OHM)
+   *    '9-4' = Tính chất hydrocarbon             (nội bộ: HYDRO)
+   *    '9-5' = Ethanol và Acid acetic            (nội bộ: ESTER)
+   *    '9-6' = Glucid và Protein cơ bản          (nội bộ: GLUC)
+   *    '9-7' = Các quy luật di truyền            (nội bộ: MENDEL)
+   *    '9-8' = Cấu trúc không gian ADN           (nội bộ: DNA)
+   *    '9-9' = Di truyền học ứng dụng            (nội bộ: BREED)
    * =================================================================== */
-  const KIND = { '9-1': 'REFR', '9-2': 'LENS', '9-3': 'OHM' };
+  const KIND = {
+    '9-1': 'REFR', '9-2': 'LENS', '9-3': 'OHM',
+    '9-4': 'HYDRO', '9-5': 'ESTER', '9-6': 'GLUC',
+    '9-7': 'MENDEL', '9-8': 'DNA', '9-9': 'BREED'
+  };
 
   // Dải thanh trượt (khớp SUBJECT_CONFIG): [min, max] của p1, p2, p3
   const SPEC = {
     REFR: [[0, 85], [1.0, 2.5], [10, 100]],
     LENS: [[10, 100], [5, 30], [1, 10]],
-    OHM: [[1, 24], [5, 100], [20, 100]]
+    OHM: [[1, 24], [5, 100], [20, 100]],
+    HYDRO: [[0.5, 5.0], [0.05, 1.0], [10, 100]],
+    ESTER: [[5, 98], [20, 90], [0.1, 5.0]],
+    GLUC: [[1, 20], [20, 100], [1, 10]],
+    MENDEL: [[100, 2000], [0.5, 1.0], [1, 5]],
+    DNA: [[10, 500], [0.5, 2.0], [1, 10]],
+    BREED: [[1, 50], [10, 100], [50, 1000]]
   };
   const DEFAULTS = {
     REFR: [45, 1.33, 80],
     LENS: [30, 15, 3],
-    OHM: [12, 20, 30]
+    OHM: [12, 20, 30],
+    HYDRO: [2.0, 0.2, 50],
+    ESTER: [40, 30, 1.0],
+    GLUC: [5, 70, 3],
+    MENDEL: [500, 1.0, 2],
+    DNA: [100, 1.2, 5],
+    BREED: [10, 75, 200]
   };
-  // Căn khung camera (nhìn vào (0,1,0), radius 11.2): scale + vị trí gốc của từng bài
+  // Vùng khung hình an toàn (camera nhìn (0,1,0), bàn lưới y = -1.25)
+  const REGION = { x0: -5.5, x1: 5.5, y0: -1.2, y1: 4.3 };
+  // Dự phòng nếu không đo được hộp bao: scale + vị trí gốc của từng bài
   const FRAME = {
-    REFR: { s: 0.68, x: -2.7, y: 0.7 },
-    LENS: { s: 0.6, x: 0, y: -0.1 },
-    OHM: { s: 0.65, x: 0, y: -2.4 }
+    REFR: { s: 0.55, x: -2.2, y: 0.3 },
+    LENS: { s: 0.48, x: 0, y: -0.2 },
+    OHM: { s: 0.52, x: 0, y: -1.8 },
+    HYDRO: { s: 0.5, x: -1.8, y: -1.2 },
+    ESTER: { s: 0.45, x: -1.8, y: -1.2 },
+    GLUC: { s: 0.5, x: -2.2, y: -1.2 },
+    MENDEL: { s: 0.55, x: -0.3, y: -1.2 },
+    DNA: { s: 0.6, x: 0, y: 1.2 },
+    BREED: { s: 0.5, x: -1.0, y: -1.2 }
   };
+
+  /**
+   * Tự co/dịch Group gốc để toàn bộ mô hình + bảng LED nằm gọn trong
+   * x ∈ [-5.5, 5.5], y ∈ [-1.2, 4.3]; đáy mô hình đặt sát mặt bàn (y = -1.2).
+   */
+  function fitRoot(root, kind) {
+    try {
+      root.scale.setScalar(1);
+      root.position.set(0, 0, 0);
+      root.updateMatrixWorld(true);
+      const bb = new THREE.Box3().setFromObject(root);
+      const size = bb.getSize(new THREE.Vector3());
+      const c = bb.getCenter(new THREE.Vector3());
+      if (!(size.x > 0.01) || !(size.y > 0.01) || !isFinite(size.x + size.y + c.x + c.y)) throw new Error('bbox');
+      const s = Math.min((REGION.x1 - REGION.x0) / size.x, (REGION.y1 - REGION.y0) / size.y) * 0.97;
+      root.scale.setScalar(s);
+      root.position.set((REGION.x0 + REGION.x1) / 2 - c.x * s, REGION.y0 - bb.min.y * s, 0);
+      root.updateMatrixWorld(true);
+    } catch (e) {
+      const fr = FRAME[kind];
+      root.scale.setScalar(fr.s);
+      root.position.set(fr.x, fr.y, 0);
+    }
+  }
 
   /** Lấy min/max thật của thanh trượt i (1..3): ưu tiên input DOM, sau đó SUBJECT_CONFIG */
   function sliderRange(expId, i) {
@@ -1358,16 +2497,19 @@
     removeToolbar9();
     if (kind !== 'OHM') ohmState = null;
 
-    // Group gốc đã căn tỷ lệ + hạ độ cao để mô hình nằm giữa khung camera mặc định
-    const fr = FRAME[kind];
+    // Group gốc: sau khi dựng xong sẽ được tự căn tỷ lệ/vị trí vào vùng khung hình
     const root = new THREE.Group();
-    root.position.set(fr.x, fr.y, 0);
-    root.scale.setScalar(fr.s);
     expGroup.add(root);
     expState.g9Root = root;
 
     if (kind === 'REFR') buildRefr(root, expState);
     else if (kind === 'LENS') buildLens(root, expState);
+    else if (kind === 'HYDRO') buildHydro(root, expState);
+    else if (kind === 'ESTER') buildEster(root, expState);
+    else if (kind === 'GLUC') buildGluc(root, expState);
+    else if (kind === 'MENDEL') buildMendel(root, expState);
+    else if (kind === 'DNA') buildDNA(root, expState);
+    else if (kind === 'BREED') buildBreed(root, expState);
     else {
       buildOhm(root, expState);
       expState.g9.closed = true;
@@ -1381,6 +2523,7 @@
     const p2 = readParam('param2', df[1]);
     const p3 = readParam('param3', df[2]);
     window.updateGrade9(expId, expState, p1, p2, p3);
+    fitRoot(root, kind);
     return true;
   };
 
@@ -1392,6 +2535,12 @@
     const c = normParam(expId, kind, 3, p3);
     if (kind === 'REFR') updateRefr(expState, a, b, c);
     else if (kind === 'LENS') updateLens(expState, a, b, c);
+    else if (kind === 'HYDRO') updateHydro(expState, a, b, c);
+    else if (kind === 'ESTER') updateEster(expState, a, b, c);
+    else if (kind === 'GLUC') updateGluc(expState, a, b, c);
+    else if (kind === 'MENDEL') updateMendel(expState, a, b, c);
+    else if (kind === 'DNA') updateDNA(expState, a, b, c);
+    else if (kind === 'BREED') updateBreed(expState, a, b, c);
     else {
       const g = expState.g9;
       g.rawParams = [p1, p2, p3];
@@ -1406,6 +2555,12 @@
     dt = (typeof dt === 'number' && isFinite(dt) && dt > 0) ? dt : 0.016;
     if (kind === 'REFR') animateRefr(expState, dt);
     else if (kind === 'LENS') animateLens(expState, dt);
+    else if (kind === 'HYDRO') animateHydro(expState, dt);
+    else if (kind === 'ESTER') animateEster(expState, dt);
+    else if (kind === 'GLUC') animateGluc(expState, dt);
+    else if (kind === 'MENDEL') animateMendel(expState, dt);
+    else if (kind === 'DNA') animateDNA(expState, dt);
+    else if (kind === 'BREED') animateBreed(expState, dt);
     else animateOhm(expState, dt);
   };
 
